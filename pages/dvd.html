@@ -31,21 +31,48 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
   filter:drop-shadow(0 0 14px rgba(255,107,0,.7))
 }
 
+/* GEOMETRY DASH STYLE WALL IMPACT */
+
 .impact{
   position:absolute;
-  width:12px;
-  height:12px;
-  border:3px solid var(--impact-color);
-  border-radius:50%;
   pointer-events:none;
-  transform:translate(-50%,-50%);
-  animation:impact .75s ease-out forwards;
-  box-shadow:0 0 15px var(--impact-color),inset 0 0 8px var(--impact-color);
+  z-index:2;
+  background:radial-gradient(
+    ellipse,
+    rgba(255,245,210,.95) 0%,
+    rgba(255,160,65,.75) 20%,
+    rgba(255,100,20,.3) 48%,
+    transparent 75%
+  );
+  filter:blur(5px);
+  animation:impactGlow .55s ease-out forwards;
 }
 
-@keyframes impact{
-  0%{width:8px;height:8px;opacity:1;border-width:3px}
-  100%{width:110px;height:110px;opacity:0;border-width:1px}
+@keyframes impactGlow{
+  0%{opacity:1;transform:scale(1)}
+  35%{opacity:.9;transform:scale(1.5)}
+  100%{opacity:0;transform:scale(2.3)}
+}
+
+.impact-streak{
+  position:absolute;
+  pointer-events:none;
+  z-index:2;
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,180,100,.8),
+    rgba(255,245,220,1),
+    rgba(255,180,100,.8),
+    transparent
+  );
+  filter:blur(3px);
+  animation:streak .4s ease-out forwards;
+}
+
+@keyframes streak{
+  0%{opacity:1;transform:scaleX(.2)}
+  100%{opacity:0;transform:scaleX(1.5)}
 }
 
 .bar{
@@ -108,9 +135,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 #pop.go{animation:pop 1.2s ease-out}
 
 @keyframes pop{
-  0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-8deg)}
-  20%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(5deg)}
-  100%{opacity:0;transform:translate(-50%,-50%) scale(1.5) rotate(-5deg)}
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
 </head>
@@ -163,13 +190,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
       paused=false,
       last=0;
 
-  var tShake=99999,
-      tPulse=99999,
+  var tPulse=99999,
       tOrb=99999,
       ang=0,
       orbiting=false,
       DUR=3800,
-      rotation=0,
       lastWallHit=0;
 
   // RECTANGULAR LOGO SIZE (3:2)
@@ -183,7 +208,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
     logo.style.objectFit='fill';
   }
 
-  // 6 orbiting pictures: two rings of three
+  // 6 ORBITING PICTURES
 
   var orbs=[];
 
@@ -209,32 +234,48 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
     y=Math.min(y,Math.max(0,innerHeight-h));
   }
 
-  // WALL IMPACT SHOCKWAVE
+  // WALL IMPACT GLOW
 
   function wallImpact(horizontal){
 
     if(reduce)return;
 
-    var effect=document.createElement('div');
-    effect.className='impact';
+    var cx=horizontal?(vx>0?x+w:x):x+w/2;
+    var cy=horizontal?y+h/2:(vy>0?y+h:y);
 
-    var color='hsl('+Math.floor(Math.random()*360)+',100%,65%)';
+    // Soft concentrated glow
 
-    effect.style.setProperty('--impact-color',color);
+    var glow=document.createElement('div');
+    glow.className='impact';
 
-    if(horizontal){
-      effect.style.left=(vx>0?x+w:x)+'px';
-      effect.style.top=(y+h/2)+'px';
-    }else{
-      effect.style.left=(x+w/2)+'px';
-      effect.style.top=(vy>0?y+h:y)+'px';
-    }
+    glow.style.width='75px';
+    glow.style.height='110px';
+    glow.style.left=cx+'px';
+    glow.style.top=cy+'px';
+    glow.style.transform='translate(-50%,-50%)';
 
-    world.appendChild(effect);
+    world.appendChild(glow);
 
     setTimeout(function(){
-      effect.remove();
-    },800);
+      glow.remove();
+    },600);
+
+    // Light streak along the wall
+
+    var streak=document.createElement('div');
+    streak.className='impact-streak';
+
+    streak.style.width=horizontal?'5px':'100px';
+    streak.style.height=horizontal?'100px':'5px';
+    streak.style.left=cx+'px';
+    streak.style.top=cy+'px';
+    streak.style.transform='translate(-50%,-50%)';
+
+    world.appendChild(streak);
+
+    setTimeout(function(){
+      streak.remove();
+    },450);
   }
 
   // ORBIT ANIMATION
@@ -271,10 +312,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
     if(!reduce){
 
-      tShake=0;
-
-      flash.style.background='hsl('+Math.floor(Math.random()*360)+',100%,65%)';
-
+      flash.style.background='rgba(255,190,110,.8)';
       flash.classList.add('on');
 
       requestAnimationFrame(function(){
@@ -296,11 +334,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
     if(!paused){
 
-      var ms=dt*1000;
-
-      tShake+=ms;
-      tPulse+=ms;
-      tOrb+=ms;
+      tPulse+=dt*1000;
+      tOrb+=dt*1000;
 
       x+=vx*dt;
       y+=vy*dt;
@@ -310,7 +345,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
           mx=innerWidth-w,
           my=innerHeight-h;
 
-      // Horizontal collisions
+      // HORIZONTAL COLLISIONS
 
       if(x<=0){
         x=0;
@@ -325,7 +360,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
         wallImpact(true);
       }
 
-      // Vertical collisions
+      // VERTICAL COLLISIONS
 
       if(y<=0){
         y=0;
@@ -342,13 +377,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
       if(hx||hy){
         swap();
-
         tPulse=0;
-        rotation+=Math.random()*16-8;
-
-        if(!reduce){
-          tShake=0;
-        }
       }
 
       // CORNER DETECTION
@@ -364,33 +393,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
         lastWallHit=now;
       }
 
-      // SHAKE
-
-      if(tShake<1000){
-
-        var a=20*Math.pow(1-tShake/1000,2);
-
-        world.style.transform=
-          'translate('+
-          ((Math.random()-.5)*a)+'px,'+
-          ((Math.random()-.5)*a)+'px)';
-
-      }
-      else if(world.style.transform){
-        world.style.transform='';
-      }
-
-      // LOGO PULSE + ROTATION
+      // LOGO PULSE
 
       var sc=tPulse<700
         ?1+.4*(1-tPulse/700)
         :1;
 
-      var rot=rotation*Math.max(0,1-tPulse/700);
-
       logo.style.transform=
-        'translate('+x+'px,'+y+'px) '+
-        'scale('+sc+') rotate('+rot+'deg)';
+        'translate('+x+'px,'+y+'px) scale('+sc+')';
 
       // ORBITERS
 
