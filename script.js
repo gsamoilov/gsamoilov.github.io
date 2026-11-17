@@ -12,4 +12,4 @@ setInterval(() => {
 
     document.getElementById("background").src = images[currentImage];
 
-}, 3 * 60 * 1000);
+}, 10 * 1000);
