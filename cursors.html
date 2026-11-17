@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursor lab | Greg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070d;--ink:#f2f2f8;--muted:#9a9ab0;--line:rgba(255,255,255,.12);--b:#22d3ee;--a:#8b5cf6;
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);
+  background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:48px 48px;touch-action:none}
+body.hide,body.hide *{cursor:none!important}
+canvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+.bar{position:fixed;top:0;left:0;right:0;z-index:5;padding:18px clamp(16px,4vw,40px)}
+.bar a{color:var(--muted);text-decoration:none;transition:color .2s}
+.bar a:hover{color:var(--ink)}
+.center{position:fixed;inset:0;z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;pointer-events:none}
+.center h1{font-size:clamp(2.6rem,10vw,8rem);letter-spacing:-.05em;line-height:1}
+.center p{color:var(--muted);margin-top:14px;font-size:1.1rem}
+.dock{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:5;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;
+  width:min(92vw,640px);padding:10px;border:1px solid var(--line);border-radius:26px;background:rgba(255,255,255,.06);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.dock button{font:inherit;color:var(--ink);background:none;border:1px solid transparent;border-radius:99px;padding:8px 18px;cursor:pointer;transition:background .2s}
+.dock button:hover{background:rgba(255,255,255,.1)}
+.dock button[aria-pressed="true"]{background:linear-gradient(100deg,var(--b),var(--a));color:#07070d;font-weight:500}
+a:focus-visible,button:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+</style>
+</head>
+<body class="hide">
+<div class="bar"><a href="index.html">Back home</a></div>
+<div class="center"><h1 id="title">Comet</h1><p id="hint">Move your cursor around.</p></div>
+<canvas id="cv"></canvas>
+<div class="dock" id="dock" role="group" aria-label="Cursor effects"></div>
+
+<script>
+(function(){
+  var cv=document.getElementById('cv'),c=cv.getContext('2d'),W=0,H=0;
+  var M={x:innerWidth/2,y:innerHeight/2,hov:false};
+  function resize(){var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0)}
+  resize();addEventListener('resize',resize);
+
+  var fx={
+    comet:{label:'Comet',hint:'Move your cursor around.',native:true,pts:[],
+      reset:function(){this.pts=[]},
+      move:function(x,y){this.pts.push({x:x,y:y,t:performance.now()})},
+      draw:function(now){
+        var p=this.pts;while(p.length&&now-p[0].t>700)p.shift();
+        c.lineCap='round';c.globalCompositeOperation='lighter';
+        for(var i=1;i<p.length;i++){
+          var k=1-(now-p[i].t)/700;
+          c.strokeStyle='hsla('+((now/8+i*3)%360)+',95%,60%,'+k+')';c.lineWidth=2+16*k;
+          c.beginPath();c.moveTo(p[i-1].x,p[i-1].y);c.lineTo(p[i].x,p[i].y);c.stroke();
+        }
+        c.globalCompositeOperation='source-over';
+      }},
+    sparkles:{label:'Sparkles',hint:'Shake it a little.',native:true,p:[],
+      reset:function(){this.p=[]},
+      move:function(x,y){for(var i=0;i<3;i++)this.p.push({x:x,y:y,vx:(Math.random()-.5)*2.4,vy:(Math.random()-.5)*2.4+.3,t:performance.now(),r:1.5+Math.random()*3,h:Math.random()*80+230})},
+      draw:function(now,dt){
+        var p=this.p=this.p.filter(function(s){return now-s.t<900});
+        c.globalCompositeOperation='lighter';
+        p.forEach(function(s){
+          s.x+=s.vx*dt/16.7;s.y+=s.vy*dt/16.7;
+          var k=1-(now-s.t)/900;
+          c.fillStyle='hsla('+s.h+',100%,70%,'+k+')';c.beginPath();c.arc(s.x,s.y,s.r*k+.5,0,6.283);c.fill();
+        });
+        c.globalCompositeOperation='source-over';
+      }},
+    ring:{label:'Ring',hint:'Hover the buttons below.',native:false,rx:innerWidth/2,ry:innerHeight/2,rr:16,
+      reset:function(){this.rx=M.x;this.ry=M.y},
+      draw:function(){
+        this.rx+=(M.x-this.rx)*.16;this.ry+=(M.y-this.ry)*.16;
+        this.rr+=((M.hov?40:16)-this.rr)*.2;
+        c.beginPath();c.arc(this.rx,this.ry,this.rr,0,6.283);
+        c.lineWidth=2;c.strokeStyle='#22d3ee';c.stroke();
+        if(M.hov){c.fillStyle='rgba(34,211,238,.18)';c.fill()}
+        c.beginPath();c.arc(M.x,M.y,4,0,6.283);c.fillStyle='#f2f2f8';c.fill();
+      }},
+    spot:{label:'Spotlight',hint:'Find the grid.',native:true,r:150,
+      reset:function(){},
+      draw:function(){
+        c.fillStyle='rgba(7,7,13,.94)';c.fillRect(0,0,W,H);
+        this.r+=((M.hov?220:150)-this.r)*.12;
+        var g=c.createRadialGradient(M.x,M.y,0,M.x,M.y,this.r);
+        g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.55,'rgba(0,0,0,.9)');g.addColorStop(1,'rgba(0,0,0,0)');
+        c.globalCompositeOperation='destination-out';c.fillStyle=g;
+        c.beginPath();c.arc(M.x,M.y,this.r,0,6.283);c.fill();
+        c.globalCompositeOperation='source-over';
+      }},
+    emoji:{label:'Emoji',hint:'Leave a trail.',native:true,p:[],lx:0,ly:0,set:['✨','🐐','🔥','💜','⭐'],
+      reset:function(){this.p=[];this.lx=M.x;this.ly=M.y},
+      move:function(x,y){
+        if(Math.hypot(x-this.lx,y-this.ly)<38)return;
+        this.lx=x;this.ly=y;
+        this.p.push({x:x,y:y,vy:-.6,t:performance.now(),e:this.set[Math.floor(Math.random()*this.set.length)]});
+      },
+      draw:function(now,dt){
+        var p=this.p=this.p.filter(function(s){return now-s.t<1100});
+        c.font='26px serif';c.textAlign='center';c.textBaseline='middle';
+        p.forEach(function(s){
+          s.vy+=.012*dt/16.7;s.y+=s.vy*dt/16.7*2;
+          c.globalAlpha=Math.max(0,1-(now-s.t)/1100);c.fillText(s.e,s.x,s.y);
+        });
+        c.globalAlpha=1;
+      }},
+    ripple:{label:'Ripples',hint:'Click anywhere.',native:true,p:[],
+      reset:function(){this.p=[]},
+      click:function(x,y){var t=performance.now();this.p.push({x:x,y:y,t:t},{x:x,y:y,t:t+150})},
+      draw:function(now){
+        var p=this.p=this.p.filter(function(r){return now-r.t<1000});
+        p.forEach(function(r){
+          var k=Math.max(0,(now-r.t)/1000);
+          c.beginPath();c.arc(r.x,r.y,k*170,0,6.283);
+          c.lineWidth=3;c.strokeStyle='hsla('+(190+k*100)+',95%,65%,'+(1-k)+')';c.stroke();
+        });
+      }}
+  };
+
+  var names=Object.keys(fx),eff=null,dock=document.getElementById('dock'),btns={};
+  names.forEach(function(n,i){
+    var b=document.createElement('button');b.type='button';b.textContent=fx[n].label;b.title='Press '+(i+1);
+    b.addEventListener('click',function(){pick(n)});dock.appendChild(b);btns[n]=b;
+  });
+  function pick(n){
+    eff=fx[n];if(eff.reset)eff.reset();
+    document.body.classList.toggle('hide',!eff.native);
+    document.getElementById('title').textContent=eff.label;
+    document.getElementById('hint').textContent=eff.hint;
+    names.forEach(function(k){btns[k].setAttribute('aria-pressed',k===n)});
+  }
+
+  addEventListener('pointermove',function(e){
+    M.x=e.clientX;M.y=e.clientY;M.hov=!!(e.target.closest&&e.target.closest('button,a'));
+    if(eff.move)eff.move(M.x,M.y);
+  });
+  addEventListener('pointerdown',function(e){M.x=e.clientX;M.y=e.clientY;if(eff.click)eff.click(M.x,M.y)});
+  addEventListener('keydown',function(e){var i=parseInt(e.key,10)-1;if(names[i])pick(names[i])});
+
+  var last=performance.now();
+  function loop(now){
+    var dt=Math.min(50,now-last);last=now;
+    c.clearRect(0,0,W,H);eff.draw(now,dt);
+    requestAnimationFrame(loop);
+  }
+  pick('comet');requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
