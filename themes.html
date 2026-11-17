@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="ember">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Themes | Greg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Each theme sets tokens: surfaces, borders, blur, radius, shadow, type. Backgrounds are interactive (see script). */
+:root,[data-theme="ember"]{
+  --bg:#0c0705;--ink:#fff4e8;--muted:#b9a08c;
+  --card:rgba(255,100,20,.07);--bd:rgba(255,150,60,.35);--bw:1px;--blur:blur(10px);--rad:18px;
+  --sh:0 0 40px rgba(255,80,0,.14);--spec:rgba(255,170,60,.2);
+  --acc:linear-gradient(100deg,#ffb703,#ff6b00 55%,#ff3d1f);--accink:#1a0a04;--pill:99px;
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+[data-theme="glass"]{
+  --bg:#150812;--ink:#fff;--muted:rgba(255,255,255,.72);
+  --card:rgba(255,255,255,.12);--bd:rgba(255,255,255,.3);--bw:1px;--blur:blur(28px) saturate(190%);--rad:32px;
+  --sh:0 20px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.1);--spec:rgba(255,255,255,.28);
+  --acc:linear-gradient(100deg,rgba(255,255,255,.5),rgba(255,255,255,.2));--accink:#fff;--pill:99px;
+}
+[data-theme="brutal"]{
+  --bg:#ffd93d;--ink:#111;--muted:#3b3317;
+  --card:#fff;--bd:#111;--bw:3px;--blur:none;--rad:0;
+  --sh:8px 8px 0 #111;--spec:transparent;--acc:#ff4d1f;--accink:#111;--pill:0;
+}
+[data-theme="terminal"]{
+  --bg:#020a04;--ink:#47ff86;--muted:#2fae5c;
+  --card:rgba(0,40,12,.5);--bd:#1f8f45;--bw:1px;--blur:none;--rad:2px;
+  --sh:0 0 24px rgba(71,255,134,.18);--spec:rgba(71,255,134,.12);--acc:#47ff86;--accink:#021a0a;--pill:2px;
+  --font:"Space Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+html[data-theme="glass"]{background:linear-gradient(160deg,#2a0d1c,#150812 55%,#1a0d2e)}
+body{color:var(--ink);font-family:var(--font);line-height:1.6;min-height:100vh;transition:color .3s}
+canvas{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+#blobs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;display:none}
+[data-theme="glass"] #blobs{display:block}
+[data-theme="glass"] canvas{display:none}
+#blobs i{position:absolute;border-radius:50%;filter:blur(55px);opacity:.85;will-change:transform}
+#blobs i:nth-child(1){width:42vw;height:42vw;left:-6vw;top:-8vw;background:#ff5a1f;animation:d1 18s ease-in-out infinite alternate}
+#blobs i:nth-child(2){width:34vw;height:34vw;right:-4vw;top:12vh;background:#ffb703;animation:d2 22s ease-in-out infinite alternate}
+#blobs i:nth-child(3){width:38vw;height:38vw;left:25vw;bottom:-14vw;background:#ff2e63;animation:d3 20s ease-in-out infinite alternate}
+#blobs i:nth-child(4){width:26vw;height:26vw;left:60vw;bottom:5vh;background:#7b2cff;animation:d1 25s ease-in-out infinite alternate-reverse}
+#blobs i#follow{width:24vw;height:24vw;left:0;top:0;background:#fff;opacity:.4;animation:none}
+@keyframes d1{to{transform:translate(12vw,10vh) scale(1.2)}}
+@keyframes d2{to{transform:translate(-14vw,16vh) scale(.85)}}
+@keyframes d3{to{transform:translate(10vw,-14vh) scale(1.15)}}
+[data-theme="terminal"] body::after{content:"";position:fixed;inset:0;z-index:9;pointer-events:none;background:repeating-linear-gradient(transparent 0 2px,rgba(0,0,0,.28) 2px 3px)}
+[data-theme="terminal"] h1,[data-theme="terminal"] h2,[data-theme="terminal"] p,[data-theme="terminal"] .btn{text-shadow:0 0 8px rgba(71,255,134,.6)}
+
+main{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:78px clamp(18px,4vw,40px) 150px}
+.back{color:var(--muted);text-decoration:none;position:absolute;top:26px;left:clamp(18px,4vw,40px)}
+.back:hover{color:var(--ink)}
+h1{font-size:clamp(2.8rem,10vw,7rem);letter-spacing:-.05em;line-height:1}
+[data-theme="brutal"] h1{letter-spacing:-.03em;text-decoration:underline;text-decoration-thickness:8px;text-underline-offset:8px;text-decoration-color:#ff4d1f}
+.sub{color:var(--muted);margin:14px 0 36px;font-size:1.1rem;max-width:52ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.card{position:relative;overflow:hidden;padding:26px;background:var(--card);border:var(--bw) solid var(--bd);border-radius:var(--rad);
+  box-shadow:var(--sh);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);transition:transform .2s,box-shadow .2s}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(260px circle at var(--px,50%) var(--py,0%),var(--spec),transparent 70%)}
+[data-theme="brutal"] .card:hover{transform:translate(-4px,-4px);box-shadow:12px 12px 0 #111}
+.card h2{font-size:1.35rem;letter-spacing:-.02em;margin-bottom:8px}
+.card p{color:var(--muted)}
+.stats{display:flex;gap:22px;margin-top:14px}
+.stats b{display:block;font-size:2rem;line-height:1.1}
+.stats span{font-size:.85rem;color:var(--muted)}
+.row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn,input{font:inherit;color:var(--ink);border-radius:var(--pill);border:var(--bw) solid var(--bd)}
+.btn{background:var(--acc);color:var(--accink);padding:10px 22px;cursor:pointer;font-weight:500}
+[data-theme="glass"] .btn{border-color:rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+[data-theme="brutal"] .btn{box-shadow:4px 4px 0 #111;transition:transform .1s,box-shadow .1s}
+[data-theme="brutal"] .btn:active{transform:translate(4px,4px);box-shadow:none}
+input{background:rgba(127,127,127,.12);padding:10px 16px;flex:1;min-width:140px}
+input::placeholder{color:var(--muted)}
+
+.dock{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:min(94vw,640px);
+  padding:10px;background:var(--card);border:var(--bw) solid var(--bd);border-radius:calc(var(--rad) + 8px);box-shadow:var(--sh);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+[data-theme="brutal"] .dock{background:#fff}
+.dock button{font:inherit;color:var(--ink);background:none;border:var(--bw) solid transparent;border-radius:var(--pill);padding:8px 18px;cursor:pointer}
+.dock button:hover{background:rgba(127,127,127,.2)}
+.dock button[aria-pressed="true"]{background:var(--acc);color:var(--accink);font-weight:500}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ffb703;outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="blobs" aria-hidden="true"><i></i><i></i><i></i><i></i><i id="follow"></i></div>
+<canvas id="bg"></canvas>
+
+<main>
+  <a class="back" href="index.html">Back home</a>
+  <h1 id="title">Ember</h1>
+  <p class="sub" id="desc">Embers drift up and scatter away from your cursor.</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Info box</h2>
+      <p>Same content, different material. Each theme changes surfaces, borders, blur, shape and the background behind them.</p>
+    </section>
+    <section class="card">
+      <h2>Stats</h2>
+      <div class="stats">
+        <div><b>6</b><span>cursors</span></div>
+        <div><b>4</b><span>themes</span></div>
+        <div><b>1</b><span>goat</span></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Say hi</h2>
+      <div class="row"><input type="text" placeholder="your name" aria-label="Your name"><button class="btn" type="button">Send</button></div>
+    </section>
+  </div>
+</main>
+
+<div class="dock" id="dock" role="group" aria-label="Themes"></div>
+
+<script>
+(function(){
+  var root=document.documentElement,cv=document.getElementById('bg'),c=cv.getContext('2d'),W=0,H=0;
+  var M={x:innerWidth/2,y:innerHeight/2},sm={x:M.x,y:M.y};
+  function resize(){var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);if(cur&&cur.init)cur.init()}
+
+  var sprite=document.createElement('canvas');sprite.width=sprite.height=64;
+  var sg=sprite.getContext('2d'),gr=sg.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,230,140,1)');gr.addColorStop(.3,'rgba(255,130,20,.65)');gr.addColorStop(1,'rgba(255,60,0,0)');
+  sg.fillStyle=gr;sg.fillRect(0,0,64,64);
+
+  var themes={
+    ember:{label:'Ember',desc:'Embers drift up and scatter away from your cursor.',e:[],
+      init:function(){this.e=[];for(var i=0;i<150;i++)this.e.push(this.mk(true))},
+      mk:function(any){return{x:Math.random()*W,y:any?Math.random()*H:H+10,vy:.4+Math.random()*1.1,r:5+Math.random()*13,ph:Math.random()*6.28}},
+      draw:function(now,dt){
+        c.globalCompositeOperation='lighter';
+        for(var i=0;i<this.e.length;i++){
+          var p=this.e[i];
+          p.y-=p.vy*dt/16.7;p.x+=Math.sin(now/800+p.ph)*.35;
+          var dx=p.x-M.x,dy=p.y-M.y,d2=dx*dx+dy*dy;
+          if(d2<28000){var d=Math.sqrt(d2)+1,f=(1-d2/28000)*3.2;p.x+=dx/d*f;p.y+=dy/d*f}
+          if(p.y<-20){this.e[i]=this.mk(false);continue}
+          var a=Math.min(1,p.y/H*1.3)*(.7+.3*Math.sin(now/90+p.ph)),s=p.r*(.5+p.y/H*.7);
+          c.globalAlpha=Math.max(0,a);c.drawImage(sprite,p.x-s,p.y-s,s*2,s*2);
+        }
+        c.globalAlpha=1;c.globalCompositeOperation='source-over';
+      }},
+    glass:{label:'Liquid glass',desc:'Frosted panels over drifting color. A big blob chases your cursor.',
+      draw:function(){
+        var f=document.getElementById('follow');
+        f.style.transform='translate3d('+(sm.x-W*.12)+'px,'+(sm.y-W*.12)+'px,0)';
+      }},
+    brutal:{label:'Brutalist',desc:'Flat color, hard shadows. The dots swell around your cursor.',
+      draw:function(){
+        c.fillStyle='#111';var st=34;
+        for(var y=st/2;y<H;y+=st)for(var x=st/2;x<W;x+=st){
+          var d=Math.hypot(x-sm.x,y-sm.y),k=Math.max(0,1-d/190);
+          c.beginPath();c.arc(x,y,2+11*k*k,0,6.283);c.fill();
+        }
+      }},
+    terminal:{label:'Terminal',desc:'Digital rain. Columns near your cursor light up.',persist:true,cols:[],
+      init:function(){this.cols=[];for(var i=0;i<Math.ceil(W/16);i++)this.cols.push(Math.random()*-40);c.fillStyle='#020a04';c.fillRect(0,0,W,H);this.t=0},
+      draw:function(now,dt){
+        this.t+=dt;if(this.t<48)return;this.t=0;
+        c.fillStyle='rgba(2,10,4,.14)';c.fillRect(0,0,W,H);c.font='15px monospace';
+        var chars='アイウエオカキクケコサシスセソ0123456789ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ';
+        for(var i=0;i<this.cols.length;i++){
+          var x=i*16,y=this.cols[i]*16,lit=Math.abs(x-M.x)<90&&Math.abs(y-M.y)<200;
+          c.fillStyle=lit?'#d9ffe6':'#1fd35a';
+          c.fillText(chars.charAt(Math.floor(Math.random()*chars.length)),x,y);
+          this.cols[i]=(y>H&&Math.random()>.975)?0:this.cols[i]+(lit?2:1);
+        }
+      }}
+  };
+
+  var names=Object.keys(themes),cur=null,dock=document.getElementById('dock'),btns={};
+  names.forEach(function(n,i){
+    var b=document.createElement('button');b.type='button';b.textContent=themes[n].label;b.title='Press '+(i+1);
+    b.addEventListener('click',function(){pick(n)});dock.appendChild(b);btns[n]=b;
+  });
+  function pick(n){
+    cur=themes[n];root.setAttribute('data-theme',n);
+    c.clearRect(0,0,W,H);if(cur.init)cur.init();
+    document.getElementById('title').textContent=cur.label;
+    document.getElementById('desc').textContent=cur.desc;
+    names.forEach(function(k){btns[k].setAttribute('aria-pressed',k===n)});
+  }
+
+  addEventListener('pointermove',function(e){M.x=e.clientX;M.y=e.clientY});
+  addEventListener('resize',resize);
+  addEventListener('keydown',function(e){if(e.target.tagName==='INPUT')return;var i=parseInt(e.key,10)-1;if(names[i])pick(names[i])});
+
+  // card highlight follows the pointer
+  document.querySelectorAll('.card').forEach(function(card){
+    card.addEventListener('pointermove',function(e){
+      var r=card.getBoundingClientRect();
+      card.style.setProperty('--px',(e.clientX-r.left)+'px');card.style.setProperty('--py',(e.clientY-r.top)+'px');
+    });
+  });
+
+  var last=performance.now();
+  function loop(now){
+    var dt=Math.min(50,now-last);last=now;
+    sm.x+=(M.x-sm.x)*.12;sm.y+=(M.y-sm.y)*.12;
+    if(!cur.persist)c.clearRect(0,0,W,H);
+    cur.draw(now,dt);
+    requestAnimationFrame(loop);
+  }
+  resize();pick('ember');requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -9,72 +9,68 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#07070d; --ink:#f2f2f8; --muted:#9a9ab0; --line:rgba(255,255,255,.1);
-  --a:#8b5cf6; --b:#22d3ee; --c:#f472b6;
+  --bg:#0c0705; --ink:#fff4e8; --muted:#b9a08c; --line:rgba(255,190,140,.16);
+  --red:#ff3d1f; --orange:#ff6b00; --yellow:#ffb703;
   --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;overflow-x:hidden}
 a{color:inherit}
-:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
 
-/* background glow */
 .glow{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
-.glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.38}
-.glow i:nth-child(1){width:46vw;height:46vw;background:var(--a);top:-12vw;left:-10vw}
-.glow i:nth-child(2){width:40vw;height:40vw;background:var(--b);bottom:-14vw;right:-8vw;opacity:.25}
-.glow i:nth-child(3){width:28vw;height:28vw;background:var(--c);top:40vh;left:55vw;opacity:.16}
+.glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.34}
+.glow i:nth-child(1){width:46vw;height:46vw;background:var(--red);top:-12vw;left:-10vw}
+.glow i:nth-child(2){width:40vw;height:40vw;background:var(--yellow);bottom:-14vw;right:-8vw;opacity:.22}
+.glow i:nth-child(3){width:28vw;height:28vw;background:var(--orange);top:40vh;left:55vw;opacity:.18}
 
 nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
-  padding:18px clamp(20px,5vw,56px);background:rgba(7,7,13,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:18px clamp(20px,5vw,56px);background:rgba(12,7,5,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line)}
 nav b{font-weight:700;letter-spacing:-.02em}
 nav ul{display:flex;gap:clamp(14px,3vw,30px);list-style:none;font-size:.95rem;color:var(--muted)}
 nav a{text-decoration:none;transition:color .2s}
 nav a:hover{color:var(--ink)}
 
-/* hero: the one big moment */
-.hero{height:230vh;position:relative}
+/* hero: long scroll track so the intro can play out and then hold */
+.hero{height:380vh;position:relative}
 .stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;
-  padding:0 clamp(20px,6vw,90px)}
-.hello{font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;
-  background:linear-gradient(100deg,var(--ink) 20%,var(--b) 60%,var(--a));-webkit-background-clip:text;background-clip:text;color:transparent;
-  transform:translateY(calc(var(--p,0)*-3vh))}
+  padding:0 clamp(20px,6vw,90px);will-change:opacity}
+.hello{font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;will-change:transform;
+  background:linear-gradient(100deg,var(--ink) 15%,var(--yellow) 50%,var(--orange) 75%,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
 .name{font-size:clamp(2rem,7.5vw,6.2rem);font-weight:500;letter-spacing:-.04em;line-height:1.05;margin-top:.15em;min-height:1.1em}
-.name span{display:inline-block;opacity:0;filter:blur(12px);transform:translateY(.5em)}
+.name span{display:inline-block;opacity:0;will-change:transform,opacity}
 .name .sp{width:.28em}
-.name .greg{color:var(--b)}
-.hint{position:absolute;bottom:34px;left:clamp(20px,6vw,90px);color:var(--muted);font-size:.9rem;
-  display:flex;align-items:center;gap:10px;transition:opacity .2s}
+.name .greg{color:var(--yellow)}
+.hint{position:absolute;bottom:34px;left:clamp(20px,6vw,90px);color:var(--muted);font-size:.9rem;display:flex;align-items:center;gap:10px}
 .hint::before{content:"";width:1px;height:34px;background:linear-gradient(var(--muted),transparent)}
 
-/* sections */
 section.s{max-width:1080px;margin:0 auto;padding:clamp(70px,12vh,130px) clamp(20px,5vw,56px)}
 h2{font-size:clamp(1.8rem,4.5vw,3rem);letter-spacing:-.035em;line-height:1.1;margin-bottom:22px}
 .lead{color:var(--muted);font-size:1.15rem;max-width:58ch}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
-.chips span{padding:7px 16px;border:1px solid var(--line);border-radius:99px;font-size:.92rem;background:rgba(255,255,255,.04)}
+.chips span{padding:7px 16px;border:1px solid var(--line);border-radius:99px;font-size:.92rem;background:rgba(255,160,80,.06)}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:34px}
 .card{display:block;text-decoration:none;padding:26px;border:1px solid var(--line);border-radius:20px;
-  background:rgba(255,255,255,.04);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  background:rgba(255,120,40,.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   transition:transform .25s,border-color .25s,background .25s}
-.card:hover{transform:translateY(-5px);border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.07)}
+.card:hover{transform:translateY(-5px);border-color:rgba(255,160,70,.55);background:rgba(255,120,40,.1)}
 .card h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:6px}
 .card p{color:var(--muted);font-size:.97rem}
 .card.ph{border-style:dashed}
 
 footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
-.mail{display:inline-block;margin-top:14px;padding:14px 30px;border-radius:99px;font-weight:500;text-decoration:none;color:#07070d;
-  background:linear-gradient(100deg,var(--b),var(--a));transition:transform .2s}
+.mail{display:inline-block;margin-top:14px;padding:14px 30px;border-radius:99px;font-weight:500;text-decoration:none;color:#1a0a04;
+  background:linear-gradient(100deg,var(--yellow),var(--orange) 55%,var(--red));transition:transform .2s}
 .mail:hover{transform:scale(1.05)}
 
 @media (max-width:560px){nav ul li:nth-child(n+3){display:none}}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .hero{height:auto}.stage{position:static;height:auto;padding-top:20vh;padding-bottom:10vh}
-  .hello{transform:none}.name span{opacity:1!important;filter:none!important;transform:none!important}.hint{display:none}
+  .name span{opacity:1!important;transform:none!important}.hint{display:none}
 }
 </style>
 </head>
@@ -92,8 +88,8 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 </nav>
 
 <header class="hero" id="hero">
-  <div class="stage">
-    <h1 class="hello">Hello,</h1>
+  <div class="stage" id="stage">
+    <h1 class="hello" id="hello">Hello,</h1>
     <p class="name" id="name" aria-label="my name is greg."></p>
     <div class="hint" id="hint">scroll down</div>
   </div>
@@ -121,8 +117,8 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
     <p class="lead">Useless, but fun. Pick one.</p>
     <div class="grid">
       <a class="card" href="dvd.html"><h3>Bouncing logo</h3><p>The classic DVD screensaver. Will it hit the corner?</p></a>
-      <a class="card" href="cursors.html"><h3>Cursor lab</h3><p>An assortment of cursor effects to play with.</p></a>
-      <a class="card" href="themes.html"><h3>Theme switcher</h3><p>Liquid glass and other stylized looks for the whole site.</p></a>
+      <a class="card" href="cursors.html"><h3>Cursor lab</h3><p>Fluid, ribbons, swarms and more to play with.</p></a>
+      <a class="card" href="themes.html"><h3>Theme switcher</h3><p>Liquid glass, embers, brutalist and terminal looks.</p></a>
       <a class="card" href="slideshow.html"><h3>The old slideshow</h3><p>The original homepage: four images, one every 3 seconds.</p></a>
     </div>
   </section>
@@ -136,8 +132,9 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 
 <script>
 (function(){
-  var el=document.getElementById('name'), hero=document.getElementById('hero'), hint=document.getElementById('hint');
-  var text='my name is greg.', start=text.indexOf('greg'), spans=[];
+  var el=document.getElementById('name'),hero=document.getElementById('hero'),hint=document.getElementById('hint'),
+      hello=document.getElementById('hello'),stage=document.getElementById('stage');
+  var text='my name is greg.',start=text.indexOf('greg'),spans=[];
   text.split('').forEach(function(ch,i){
     var s=document.createElement('span');
     if(ch===' '){s.className='sp';s.innerHTML='&nbsp;'}else s.textContent=ch;
@@ -145,25 +142,33 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
     s.setAttribute('aria-hidden','true');
     el.appendChild(s);spans.push(s);
   });
-  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function update(){
-    if(reduce)return;
-    var max=hero.offsetHeight-innerHeight;
-    var p=Math.min(1,Math.max(0,scrollY/max));
-    hero.style.setProperty('--p',p);
-    var from=.12,to=.8,n=spans.length;
-    spans.forEach(function(s,i){
-      var t=(p-(from+(to-from)*i/n))/.14;
-      t=Math.min(1,Math.max(0,t));
-      s.style.opacity=t;
-      s.style.filter='blur('+(12*(1-t))+'px)';
-      s.style.transform='translateY('+(.5*(1-t))+'em)';
-    });
-    hint.style.opacity=p>.05?0:1;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  var n=spans.length,target=0,cur=0,raf=0;
+  function clamp(v){return Math.min(1,Math.max(0,v))}
+  function measure(){target=clamp(scrollY/(hero.offsetHeight-innerHeight));kick()}
+  function kick(){if(!raf)raf=requestAnimationFrame(frame)}
+  function frame(){
+    raf=0;
+    cur+=(target-cur)*.12;              // eased follow = smooth even on notchy mouse wheels
+    if(Math.abs(target-cur)<.0004)cur=target;
+    render(cur);
+    if(cur!==target)kick();
   }
-  addEventListener('scroll',update,{passive:true});
-  addEventListener('resize',update);
-  update();
+  function render(p){
+    // letters reveal between 8% and 55% of the scroll track, then the name just sits there
+    for(var i=0;i<n;i++){
+      var t=clamp((p-(.08+.35*i/(n-1)))/.12),e=1-Math.pow(1-t,3);
+      spans[i].style.opacity=e;
+      spans[i].style.transform='translate3d(0,'+((1-e)*.55)+'em,0)';
+    }
+    hello.style.transform='translate3d(0,'+(-Math.min(p,.55)*10)+'vh,0)';
+    hint.style.opacity=clamp(1-p/.06);
+    stage.style.opacity=clamp(1-(p-.88)/.12);   // gentle exit before the real content
+  }
+  addEventListener('scroll',measure,{passive:true});
+  addEventListener('resize',measure);
+  measure();render(cur);
 })();
 </script>
 </body>
