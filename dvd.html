@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bouncing logo | Greg</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#07070d;color:#f2f2f8;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#logo{position:absolute;top:0;left:0;width:clamp(110px,16vw,220px);height:auto;will-change:transform;user-select:none;-webkit-user-drag:none}
+.bar{position:fixed;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:18px clamp(16px,4vw,40px);pointer-events:none}
+.bar>*{pointer-events:auto}
+.bar a{color:#9a9ab0;text-decoration:none;transition:color .2s}
+.bar a:hover{color:#f2f2f8}
+.bar a:focus-visible,#pause:focus-visible{outline:2px solid #22d3ee;outline-offset:3px}
+#score{color:#9a9ab0;font-variant-numeric:tabular-nums}
+#pause{background:none;border:1px solid rgba(255,255,255,.18);color:#f2f2f8;border-radius:99px;padding:6px 16px;font:inherit;cursor:pointer}
+#pause:hover{background:rgba(255,255,255,.08)}
+.flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .6s}
+.flash.on{opacity:.22;transition:none}
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="index.html">Back home</a>
+  <span id="score">Corner hits: 0</span>
+  <button id="pause" type="button">Pause</button>
+</div>
+<img id="logo" src="images/background2.png" alt="Bouncing logo" draggable="false">
+<div class="flash" id="flash"></div>
+
+<script>
+(function(){
+  var logo=document.getElementById('logo'), score=document.getElementById('score'),
+      flash=document.getElementById('flash'), btn=document.getElementById('pause');
+  var x=0,y=0,vx=170,vy=140,hue=0,hits=0,paused=false,last=0,w=0,h=0,ready=false;
+
+  function size(){var r=logo.getBoundingClientRect();w=r.width;h=r.height}
+  function start(){
+    size();
+    x=Math.random()*Math.max(1,innerWidth-w);
+    y=Math.random()*Math.max(1,innerHeight-h);
+    if(Math.random()<.5)vx=-vx;
+    if(Math.random()<.5)vy=-vy;
+    ready=true;requestAnimationFrame(tick);
+  }
+  function recolor(){hue=(hue+57)%360;logo.style.filter='hue-rotate('+hue+'deg)'}
+
+  function tick(t){
+    if(!last)last=t;
+    var dt=Math.min(.05,(t-last)/1000);last=t;
+    if(!paused){
+      x+=vx*dt;y+=vy*dt;
+      var hitX=false,hitY=false,maxX=innerWidth-w,maxY=innerHeight-h;
+      if(x<=0){x=0;vx=Math.abs(vx);hitX=true}
+      else if(x>=maxX){x=Math.max(0,maxX);vx=-Math.abs(vx);hitX=true}
+      if(y<=0){y=0;vy=Math.abs(vy);hitY=true}
+      else if(y>=maxY){y=Math.max(0,maxY);vy=-Math.abs(vy);hitY=true}
+      if(hitX||hitY)recolor();
+      if(hitX&&hitY){
+        hits++;score.textContent='Corner hits: '+hits;
+        flash.classList.add('on');
+        requestAnimationFrame(function(){requestAnimationFrame(function(){flash.classList.remove('on')})});
+      }
+      logo.style.transform='translate('+x+'px,'+y+'px)';
+    }
+    requestAnimationFrame(tick);
+  }
+
+  btn.addEventListener('click',function(){
+    paused=!paused;btn.textContent=paused?'Resume':'Pause';last=0;
+  });
+  addEventListener('resize',size);
+  if(logo.complete&&logo.naturalWidth)start();
+  else{logo.addEventListener('load',start);logo.addEventListener('error',function(){score.textContent='Could not load images/background2.png'})}
+})();
+</script>
+</body>
+</html>

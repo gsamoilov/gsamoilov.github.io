@@ -1,16 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Goat</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="/favicon.png">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Greg’s Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070d; --ink:#f2f2f8; --muted:#9a9ab0; --line:rgba(255,255,255,.1);
+  --a:#8b5cf6; --b:#22d3ee; --c:#f472b6;
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+
+/* background glow */
+.glow{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.38}
+.glow i:nth-child(1){width:46vw;height:46vw;background:var(--a);top:-12vw;left:-10vw}
+.glow i:nth-child(2){width:40vw;height:40vw;background:var(--b);bottom:-14vw;right:-8vw;opacity:.25}
+.glow i:nth-child(3){width:28vw;height:28vw;background:var(--c);top:40vh;left:55vw;opacity:.16}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+  padding:18px clamp(20px,5vw,56px);background:rgba(7,7,13,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line)}
+nav b{font-weight:700;letter-spacing:-.02em}
+nav ul{display:flex;gap:clamp(14px,3vw,30px);list-style:none;font-size:.95rem;color:var(--muted)}
+nav a{text-decoration:none;transition:color .2s}
+nav a:hover{color:var(--ink)}
+
+/* hero: the one big moment */
+.hero{height:230vh;position:relative}
+.stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:0 clamp(20px,6vw,90px)}
+.hello{font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;
+  background:linear-gradient(100deg,var(--ink) 20%,var(--b) 60%,var(--a));-webkit-background-clip:text;background-clip:text;color:transparent;
+  transform:translateY(calc(var(--p,0)*-3vh))}
+.name{font-size:clamp(2rem,7.5vw,6.2rem);font-weight:500;letter-spacing:-.04em;line-height:1.05;margin-top:.15em;min-height:1.1em}
+.name span{display:inline-block;opacity:0;filter:blur(12px);transform:translateY(.5em)}
+.name .sp{width:.28em}
+.name .greg{color:var(--b)}
+.hint{position:absolute;bottom:34px;left:clamp(20px,6vw,90px);color:var(--muted);font-size:.9rem;
+  display:flex;align-items:center;gap:10px;transition:opacity .2s}
+.hint::before{content:"";width:1px;height:34px;background:linear-gradient(var(--muted),transparent)}
+
+/* sections */
+section.s{max-width:1080px;margin:0 auto;padding:clamp(70px,12vh,130px) clamp(20px,5vw,56px)}
+h2{font-size:clamp(1.8rem,4.5vw,3rem);letter-spacing:-.035em;line-height:1.1;margin-bottom:22px}
+.lead{color:var(--muted);font-size:1.15rem;max-width:58ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.chips span{padding:7px 16px;border:1px solid var(--line);border-radius:99px;font-size:.92rem;background:rgba(255,255,255,.04)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:34px}
+.card{display:block;text-decoration:none;padding:26px;border:1px solid var(--line);border-radius:20px;
+  background:rgba(255,255,255,.04);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:transform .25s,border-color .25s,background .25s}
+.card:hover{transform:translateY(-5px);border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.07)}
+.card h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:6px}
+.card p{color:var(--muted);font-size:.97rem}
+.card.ph{border-style:dashed}
+
+footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
+.mail{display:inline-block;margin-top:14px;padding:14px 30px;border-radius:99px;font-weight:500;text-decoration:none;color:#07070d;
+  background:linear-gradient(100deg,var(--b),var(--a));transition:transform .2s}
+.mail:hover{transform:scale(1.05)}
+
+@media (max-width:560px){nav ul li:nth-child(n+3){display:none}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .hero{height:auto}.stage{position:static;height:auto;padding-top:20vh;padding-bottom:10vh}
+  .hello{transform:none}.name span{opacity:1!important;filter:none!important;transform:none!important}.hint{display:none}
+}
+</style>
 </head>
-
 <body>
-    <img id="background" src="images/background.png" alt="" class="fullscreen-image">
+<div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
 
-    <script src="script.js"></script>
+<nav>
+  <b>greg.</b>
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#fun">Fun pages</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<header class="hero" id="hero">
+  <div class="stage">
+    <h1 class="hello">Hello,</h1>
+    <p class="name" id="name" aria-label="my name is greg."></p>
+    <div class="hint" id="hint">scroll down</div>
+  </div>
+</header>
+
+<main>
+  <section class="s" id="about">
+    <h2>I build things for the internet.</h2>
+    <p class="lead">I’m a developer who likes clean interfaces, small details, and shipping stuff that feels good to use. This site is my playground, so expect some experiments.</p>
+    <div class="chips"><span>HTML</span><span>CSS</span><span>JavaScript</span><span>Design</span><span>Tinkering</span></div>
+  </section>
+
+  <section class="s" id="work">
+    <h2>Selected work</h2>
+    <p class="lead">Placeholder projects. Swap in the real ones whenever.</p>
+    <div class="grid">
+      <a class="card ph" href="#"><h3>Project one</h3><p>A short line about what it is and what you built.</p></a>
+      <a class="card ph" href="#"><h3>Project two</h3><p>A short line about what it is and what you built.</p></a>
+      <a class="card ph" href="#"><h3>Project three</h3><p>A short line about what it is and what you built.</p></a>
+    </div>
+  </section>
+
+  <section class="s" id="fun">
+    <h2>Fun pages</h2>
+    <p class="lead">Useless, but fun. Pick one.</p>
+    <div class="grid">
+      <a class="card" href="dvd.html"><h3>Bouncing logo</h3><p>The classic DVD screensaver. Will it hit the corner?</p></a>
+      <a class="card" href="cursors.html"><h3>Cursor lab</h3><p>An assortment of cursor effects to play with.</p></a>
+      <a class="card" href="themes.html"><h3>Theme switcher</h3><p>Liquid glass and other stylized looks for the whole site.</p></a>
+      <a class="card" href="slideshow.html"><h3>The old slideshow</h3><p>The original homepage: four images, one every 3 seconds.</p></a>
+    </div>
+  </section>
+</main>
+
+<footer id="contact">
+  <h2>Say hi.</h2>
+  <p>Got an idea, a job, or a bug report?</p>
+  <a class="mail" href="mailto:you@example.com">you@example.com</a>
+</footer>
+
+<script>
+(function(){
+  var el=document.getElementById('name'), hero=document.getElementById('hero'), hint=document.getElementById('hint');
+  var text='my name is greg.', start=text.indexOf('greg'), spans=[];
+  text.split('').forEach(function(ch,i){
+    var s=document.createElement('span');
+    if(ch===' '){s.className='sp';s.innerHTML='&nbsp;'}else s.textContent=ch;
+    if(i>=start)s.classList.add('greg');
+    s.setAttribute('aria-hidden','true');
+    el.appendChild(s);spans.push(s);
+  });
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function update(){
+    if(reduce)return;
+    var max=hero.offsetHeight-innerHeight;
+    var p=Math.min(1,Math.max(0,scrollY/max));
+    hero.style.setProperty('--p',p);
+    var from=.12,to=.8,n=spans.length;
+    spans.forEach(function(s,i){
+      var t=(p-(from+(to-from)*i/n))/.14;
+      t=Math.min(1,Math.max(0,t));
+      s.style.opacity=t;
+      s.style.filter='blur('+(12*(1-t))+'px)';
+      s.style.transform='translateY('+(.5*(1-t))+'em)';
+    });
+    hint.style.opacity=p>.05?0:1;
+  }
+  addEventListener('scroll',update,{passive:true});
+  addEventListener('resize',update);
+  update();
+})();
+</script>
 </body>
 </html>
