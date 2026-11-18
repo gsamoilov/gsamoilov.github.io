@@ -35,6 +35,10 @@ body.storm .glow{filter:hue-rotate(190deg) saturate(1.5)}
 #web{z-index:-1}
 #fx{z-index:40}
 
+/* scroll progress line */
+#prog{position:fixed;left:0;top:0;width:100%;height:3px;z-index:60;pointer-events:none;transform-origin:left;transform:scaleX(var(--sp,0));
+  background:linear-gradient(90deg,var(--yellow),var(--orange),var(--red));box-shadow:0 0 12px var(--orange)}
+
 #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:50;pointer-events:none;opacity:0;
   font-weight:700;font-size:clamp(1.4rem,5vw,3rem);letter-spacing:-.02em;text-shadow:0 0 30px var(--yellow)}
 #toast.go{animation:toast 1.8s ease-out}
@@ -52,14 +56,15 @@ nav a:hover{color:var(--ink)}
 .hero{height:380vh;position:relative}
 .stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;
   padding:0 clamp(20px,6vw,90px);will-change:opacity}
-.hello{--hg:linear-gradient(100deg,var(--ink) 15%,var(--yellow) 50%,var(--orange) 75%,var(--red));
-  font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;will-change:transform;color:var(--ink)}
-/* every letter carries a slice of the same gradient, so they can be pulled off and still look right */
+.hello{font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;will-change:transform;color:var(--ink)}
+/* "Hello," letters. Each one keeps its slice of the gradient as a plain color (set in JS), so nothing gets clipped. */
 .ltr{display:inline-block;position:relative;color:var(--ink);cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
-  -webkit-background-clip:text;background-clip:text;color:transparent;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;will-change:transform}
-.ltr.live{z-index:30;cursor:grabbing}
+.ltr.away{visibility:hidden}                 /* placeholder while its letter is flying around */
 .ltr.zapped{animation:zapflash .55s ease-out}
 @keyframes zapflash{0%{filter:brightness(4) drop-shadow(0 0 20px #ffd23f)}100%{filter:none}}
+/* a letter that has been pulled free: lives on the page itself and flies in screen coordinates */
+.fly{position:fixed;left:0;top:0;z-index:35;display:block;white-space:nowrap;cursor:grabbing;touch-action:none;
+  -webkit-user-select:none;user-select:none;will-change:transform}
 .name{font-size:clamp(2rem,7.5vw,6.2rem);font-weight:500;letter-spacing:-.04em;line-height:1.05;margin-top:.15em;min-height:1.1em}
 .name span{display:inline-block;opacity:0;will-change:transform,opacity}
 .name .sp{width:.28em}
@@ -98,6 +103,12 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 .mail:hover{transform:scale(1.05);box-shadow:0 0 36px rgba(255,100,0,.4),inset 0 1px 0 rgba(255,230,200,.3)}
 .mail span{position:relative}
 
+/* scroll reveal: things spring up as they enter. Uses the separate translate/scale properties,
+   so it never fights with the magnetic cards' transform. */
+.rv{opacity:0;translate:0 44px;scale:.95}
+.rv.in{opacity:1;translate:0 0;scale:1;
+  transition:opacity .7s ease var(--d,0s),translate .95s cubic-bezier(.2,1.35,.3,1) var(--d,0s),scale .95s cubic-bezier(.2,1.35,.3,1) var(--d,0s)}
+
 @media (max-width:560px){nav ul li:nth-child(n+3){display:none}}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -107,6 +118,7 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 </style>
 </head>
 <body>
+<div id="prog" aria-hidden="true"></div>
 <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
 <canvas id="web" aria-hidden="true"></canvas>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -216,7 +228,29 @@ document.addEventListener('pointermove',function(e){
   g.style.setProperty('--py',(e.clientY-r.top)+'px');
 });
 
-/* ================= the living web: energy, lightning, draggable letters, magnets, konami ================= */
+/* scroll feel part 1: a glowing progress line + things spring up as they enter the screen */
+(function(){
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,root=document.documentElement;
+  function prog(){root.style.setProperty('--sp',Math.min(1,scrollY/Math.max(1,root.scrollHeight-innerHeight)))}
+  addEventListener('scroll',prog,{passive:true});addEventListener('resize',prog);prog();
+  if(reduce||!('IntersectionObserver' in window))return;
+  var els=document.querySelectorAll('section.s h2,section.s .lead,.chips span,section.s .card,footer>*');
+  els.forEach(function(el){
+    var idx=[].indexOf.call(el.parentNode.children,el);
+    el.style.setProperty('--d',(Math.min(idx,6)*.08)+'s');
+    el.classList.add('rv');
+  });
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(!en.isIntersecting)return;
+      var el=en.target;io.unobserve(el);el.classList.add('in');
+      setTimeout(function(){el.classList.remove('rv','in');el.style.removeProperty('--d')},1800);
+    });
+  },{threshold:.15,rootMargin:'0px 0px -6% 0px'});
+  els.forEach(function(el){io.observe(el)});
+})();
+
+/* ================= the living web: shockwaves, lightning, flying letters, magnets, konami ================= */
 (function(){
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   var wcv=document.getElementById('web'),wc=wcv.getContext('2d'),
@@ -224,7 +258,7 @@ document.addEventListener('pointermove',function(e){
       toast=document.getElementById('toast');
   var W=0,H=0,ST=46,cols=0,rows=0,nodes=[];
   var M={x:innerWidth/2,y:innerHeight/2,inside:false},sm={x:M.x,y:M.y};
-  var pulses=[],bolts=[],storm=0,stormNext=0,flash=0;
+  var pulses=[],bolts=[],storm=0,stormNext=0,flash=0,sv=0,lastSY=scrollY;
 
   function build(){
     var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;
@@ -235,10 +269,12 @@ document.addEventListener('pointermove',function(e){
     drawWeb(performance.now());
   }
 
-  /* ---- energy pulses travel outward through the mesh ---- */
+  /* zap = full energy pulse (shockwave + glowing strands). Used by letter snap-back and the konami storm. */
   function zap(x,y){if(reduce)return;pulses.push({x:x,y:y,t:performance.now()});if(pulses.length>8)pulses.shift()}
+  /* shock = plain ripple, no glowing strands. Used for normal clicks. */
+  function shock(x,y){if(reduce)return;pulses.push({x:x,y:y,t:performance.now(),quiet:true});if(pulses.length>8)pulses.shift()}
 
-  /* ---- jagged lightning bolt (midpoint displacement) ---- */
+  /* jagged lightning bolt (midpoint displacement) */
   function bolt(x1,y1,x2,y2,life){
     if(reduce)return;
     var pts=[[x1,y1],[x2,y2]],it,i;
@@ -254,13 +290,14 @@ document.addEventListener('pointermove',function(e){
   }
 
   function drawWeb(now){
-    var i,j,p,q,u,k,stm=storm>0;
+    var i,j,p,q,u,k,stm=storm>0,boost=Math.min(.3,Math.abs(sv)/120);
     while(pulses.length&&now-pulses[0].t>1500)pulses.shift();
     for(i=0;i<nodes.length;i++){
       p=nodes[i];
       k=Math.max(0,1-Math.hypot(sm.x-p.hx,sm.y-p.hy)/260);k=k*k*.62;
       p.vx=(p.vx+(p.hx+(sm.x-p.hx)*k-p.x)*.14)*.74;p.vy=(p.vy+(p.hy+(sm.y-p.hy)*k-p.y)*.14)*.74;
-      for(j=0;j<pulses.length;j++){          // the wavefront shoves nodes outward as it passes
+      p.vy-=sv*.1*(.55+.45*Math.cos(p.hx/W*3.4));    // scrolling drags the web along; it springs back
+      for(j=0;j<pulses.length;j++){                  // the wavefront shoves nodes outward as it passes
         u=pulses[j];var age=now-u.t,dx=p.x-u.x,dy=p.y-u.y,d=Math.hypot(dx,dy)||1,
             g=Math.exp(-Math.pow((d-age*.9)/32,2))*(1-age/1500);
         if(g>.02){p.vx+=dx/d*g*3.2;p.vy+=dy/d*g*3.2}
@@ -272,7 +309,8 @@ document.addEventListener('pointermove',function(e){
     function lit(a,b){
       var mx=(a.x+b.x)/2,my=(a.y+b.y)/2,best=0;
       for(var n=0;n<pulses.length;n++){
-        var v=pulses[n];if(v.quiet)continue;var ag=now-v.t,g=Math.exp(-Math.pow((Math.hypot(mx-v.x,my-v.y)-ag*.9)/38,2))*(1-ag/1500);
+        var v=pulses[n];if(v.quiet)continue;      // plain click ripples don't light up strands
+        var ag=now-v.t,g=Math.exp(-Math.pow((Math.hypot(mx-v.x,my-v.y)-ag*.9)/38,2))*(1-ag/1500);
         if(g>best)best=g;
       }
       if(best>.5)strong.push([a,b]);else if(best>.1)weak.push([a,b]);
@@ -280,7 +318,7 @@ document.addEventListener('pointermove',function(e){
     for(j=0;j<rows;j++)for(i=0;i<cols;i++){
       p=nodes[j*cols+i];
       var e=Math.hypot(p.x-p.hx,p.y-p.hy);
-      wc.strokeStyle=stm?'rgba(140,190,255,'+Math.min(.85,.12+e/70)+')':'rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70)+')';
+      wc.strokeStyle=stm?'rgba(140,190,255,'+Math.min(.85,.12+e/70+boost)+')':'rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70+boost)+')';
       wc.beginPath();
       if(i<cols-1){q=nodes[j*cols+i+1];wc.moveTo(p.x,p.y);wc.lineTo(q.x,q.y);if(pulses.length)lit(p,q)}
       if(j<rows-1){q=nodes[(j+1)*cols+i];wc.moveTo(p.x,p.y);wc.lineTo(q.x,q.y);if(pulses.length)lit(p,q)}
@@ -314,74 +352,81 @@ document.addEventListener('pointermove',function(e){
     });
   }
 
-  /* ---- Hello, letters: grab them, fling them, they snap home with lightning ---- */
+  /* ---- "Hello," letters ----
+     A letter you grab is lifted out of the heading into its own free-floating copy that lives in
+     screen coordinates. Gravity, bounces and spin all happen there. After a short flight it zaps home. */
   var helloEl=document.getElementById('hello'),L=[],drag=null;
   (function(){
     var t='Hello,';helloEl.textContent='';helloEl.setAttribute('aria-label',t);
     t.split('').forEach(function(ch){
       var s=document.createElement('span');s.className='ltr';s.textContent=ch;s.setAttribute('aria-hidden','true');
       helloEl.appendChild(s);
-      var o={el:s,ox:0,oy:0,ax:0,ay:0,vx:0,vy:0,rot:0,vr:0,st:0,t:0,gx:0,gy:0,lx:0,ly:0,lt:0};  // st: 0 home, 1 held, 2 flying
+      var o={el:s,fly:null,x:0,y:0,w:0,h:0,vx:0,vy:0,rot:0,vr:0,st:0,t:0,gx:0,gy:0,lx:0,ly:0,lt:0}; // st: 0 home, 1 held, 2 flying
       L.push(o);
       s.addEventListener('pointerdown',function(e){e.preventDefault();grab(o,e)});
     });
   })();
- function gradient(){
-  var stops=[[.15,[255,244,232]],[.5,[255,183,3]],[.75,[255,107,0]],[1,[255,61,31]]],
-      hr=helloEl.getBoundingClientRect();
-  L.forEach(function(o){
-    var r=o.el.getBoundingClientRect(),
-        t=Math.max(.15,Math.min(1,(r.left+r.width/2-hr.left)/hr.width)),i=1;
-    while(i<3&&t>stops[i][0])i++;
-    var a=stops[i-1],b=stops[i],u=(t-a[0])/(b[0]-a[0]);
-    o.el.style.color='rgb('+[0,1,2].map(function(k){return Math.round(a[1][k]+(b[1][k]-a[1][k])*u)}).join(',')+')';
-  });
-}
-  function home(o){
-    var r=o.el.getBoundingClientRect();
-    return{x:r.left+r.width/2-o.ox,y:r.top+r.height/2-o.oy,hw:r.width/2,hh:r.height/2};
+
+  function gradient(){      // each letter gets the gradient color for its spot in the word
+    var stops=[[.15,[255,244,232]],[.5,[255,183,3]],[.75,[255,107,0]],[1,[255,61,31]]],hr=helloEl.getBoundingClientRect();
+    L.forEach(function(o){
+      var r=o.el.getBoundingClientRect(),
+          t=Math.max(.15,Math.min(1,(r.left+r.width/2-hr.left)/hr.width)),i=1;
+      while(i<3&&t>stops[i][0])i++;
+      var a=stops[i-1],b=stops[i],u=(t-a[0])/(b[0]-a[0]);
+      o.el.style.color='rgb('+[0,1,2].map(function(k){return Math.round(a[1][k]+(b[1][k]-a[1][k])*u)}).join(',')+')';
+    });
+  }
+  function place(o){o.fly.style.transform='translate3d('+(o.x-o.w/2)+'px,'+(o.y-o.h/2)+'px,0) rotate('+o.rot+'rad)'}
+  function detach(o){
+    if(o.fly)return;
+    var r=o.el.getBoundingClientRect(),cs=getComputedStyle(o.el),f=document.createElement('div');
+    f.className='fly';f.textContent=o.el.textContent;f.setAttribute('aria-hidden','true');
+    f.style.fontFamily=cs.fontFamily;f.style.fontSize=cs.fontSize;f.style.fontWeight=cs.fontWeight;
+    f.style.letterSpacing=cs.letterSpacing;f.style.lineHeight=cs.lineHeight;f.style.color=cs.color;
+    f.style.width=r.width+'px';f.style.height=r.height+'px';
+    o.w=r.width;o.h=r.height;o.x=r.left+r.width/2;o.y=r.top+r.height/2;o.rot=0;
+    f.addEventListener('pointerdown',function(e){e.preventDefault();grab(o,e)});
+    document.body.appendChild(f);o.fly=f;o.el.classList.add('away');place(o);
   }
   function grab(o,e){
-    var h=home(o),cx=h.x+o.ox,cy=h.y+o.oy;
-    o.ax=cx;o.ay=cy;o.gx=e.clientX-cx;o.gy=e.clientY-cy;o.vx=o.vy=o.vr=0;
-    o.lx=e.clientX;o.ly=e.clientY;o.lt=performance.now();o.st=1;o.t=0;
-    o.el.classList.add('live');drag=o;
+    detach(o);
+    o.gx=e.clientX-o.x;o.gy=e.clientY-o.y;o.vx=o.vy=o.vr=0;
+    o.lx=e.clientX;o.ly=e.clientY;o.lt=performance.now();o.st=1;o.t=0;drag=o;
+    try{o.fly.setPointerCapture(e.pointerId)}catch(err){}
   }
   function release(){
     if(!drag)return;
     var o=drag;drag=null;
-    if(performance.now()-o.lt>90){o.vx=0;o.vy=0}   // stopped before letting go = gentle drop
+    if(performance.now()-o.lt>90){o.vx=0;o.vy=0}     // stopped before letting go = gentle drop
     o.vr=o.vx*.006+(Math.random()-.5)*.004;o.st=2;o.t=0;
   }
   function kick(o){
-    var h=home(o);o.ax=h.x+o.ox;o.ay=h.y+o.oy;
-    o.vx=(Math.random()-.5)*1.8;o.vy=-(.5+Math.random()*1.1);o.vr=(Math.random()-.5)*.02;
-    o.st=2;o.t=0;o.el.classList.add('live');
+    if(o.st===1)return;
+    detach(o);o.vx=(Math.random()-.5)*1.8;o.vy=-(.5+Math.random()*1.1);o.vr=(Math.random()-.5)*.02;o.st=2;o.t=0;
   }
-  function zapBack(o,h){
-    bolt(o.ax,o.ay,h.x,h.y,460);zap(h.x,h.y);
-    o.ox=o.oy=o.rot=o.vx=o.vy=o.vr=0;o.st=0;o.el.style.transform='';
-    o.el.classList.remove('live','zapped');void o.el.offsetWidth;o.el.classList.add('zapped');
+  function zapBack(o){
+    var r=o.el.getBoundingClientRect(),hx=r.left+r.width/2,hy=r.top+r.height/2;
+    bolt(o.x,o.y,hx,hy,460);zap(hx,hy);
+    o.fly.remove();o.fly=null;o.st=0;o.vx=o.vy=o.vr=0;o.rot=0;
+    o.el.classList.remove('away','zapped');void o.el.offsetWidth;o.el.classList.add('zapped');
   }
   function letters(dt){
     L.forEach(function(o){
-      if(o.st===0)return;
-      var h=home(o);
-      if(o.st===2){
-        o.t+=dt;
-        o.vy+=.0021*dt;o.ax+=o.vx*dt;o.ay+=o.vy*dt;o.rot+=o.vr*dt;
-        if(o.ax<h.hw){o.ax=h.hw;o.vx=Math.abs(o.vx)*.65}
-        if(o.ax>innerWidth-h.hw){o.ax=innerWidth-h.hw;o.vx=-Math.abs(o.vx)*.65}
-        if(o.ay<h.hh){o.ay=h.hh;o.vy=Math.abs(o.vy)*.6}
-        if(o.ay>innerHeight-h.hh){o.ay=innerHeight-h.hh;o.vy=-Math.abs(o.vy)*.55;o.vx*=.9;o.vr*=.8}
-        if(o.t>2100){zapBack(o,h);return}      // short hang time, then zap home
-      }
-      o.ox=o.ax-h.x;o.oy=o.ay-h.y;
-      o.el.style.transform='translate3d('+o.ox+'px,'+o.oy+'px,0) rotate('+o.rot+'rad)';
+      if(o.st!==2)return;
+      o.t+=dt;
+      o.vy+=.0021*dt;o.x+=o.vx*dt;o.y+=o.vy*dt;o.rot+=o.vr*dt;
+      var hw=o.w/2,hh=o.h/2;
+      if(o.x<hw){o.x=hw;o.vx=Math.abs(o.vx)*.65}
+      if(o.x>innerWidth-hw){o.x=innerWidth-hw;o.vx=-Math.abs(o.vx)*.65}
+      if(o.y<hh){o.y=hh;o.vy=Math.abs(o.vy)*.6}
+      if(o.y>innerHeight-hh){o.y=innerHeight-hh;o.vy=-Math.abs(o.vy)*.55;o.vx*=.88;o.vr*=.75;if(Math.abs(o.vy)<.05)o.vy=0}
+      place(o);
+      if(o.t>2100)zapBack(o);                          // short hang time, then zap home
     });
   }
 
-  /* ---- magnetic fun-page cards: lean toward the cursor and tilt in 3D ---- */
+  /* ---- magnetic fun-page cards: a gentle lean and tilt toward the cursor ---- */
   var mags=[].map.call(document.querySelectorAll('#fun .card'),function(el){return{el:el,tx:0,ty:0,rx:0,ry:0,s:1}});
   function pageRect(el){var l=0,t=0,n=el;while(n){l+=n.offsetLeft;t+=n.offsetTop;n=n.offsetParent}return{l:l-scrollX,t:t-scrollY,w:el.offsetWidth,h:el.offsetHeight}}
   function magnets(){
@@ -389,12 +434,12 @@ document.addEventListener('pointermove',function(e){
     mags.forEach(function(m){
       var r=pageRect(m.el),cx=r.l+r.w/2,cy=r.t+r.h/2,dx=M.x-cx,dy=M.y-cy,hw=r.w/2,hh=r.h/2,
           out=Math.hypot(Math.max(0,Math.abs(dx)-hw),Math.max(0,Math.abs(dy)-hh)),
-          f=M.inside?Math.max(0,1-out/120):0;
+          f=M.inside?Math.max(0,1-out/60):0;
       f=f*f*(3-2*f);
       var nx=Math.max(-1,Math.min(1,dx/hw)),ny=Math.max(-1,Math.min(1,dy/hh)),
-          T={tx:nx*12*f,ty:ny*12*f,rx:-ny*11*f,ry:nx*14*f,s:1+.06*f};
+          T={tx:nx*3*f,ty:ny*3*f,rx:-ny*5*f,ry:nx*6*f,s:1+.012*f};
       for(var k in T)m[k]+=(T[k]-m[k])*.15;
-      m.el.style.transform='perspective(800px) translate3d('+m.tx+'px,'+m.ty+'px,0) rotateX('+m.rx+'deg) rotateY('+m.ry+'deg) scale('+m.s+')';
+      m.el.style.transform='perspective(900px) translate3d('+m.tx+'px,'+m.ty+'px,0) rotateX('+m.rx+'deg) rotateY('+m.ry+'deg) scale('+m.s+')';
     });
   }
 
@@ -428,21 +473,22 @@ document.addEventListener('pointermove',function(e){
     if(drag&&drag.st===1){
       var now=performance.now(),dt=Math.max(8,now-drag.lt);
       drag.vx=drag.vx*.5+(e.clientX-drag.lx)/dt*.5;drag.vy=drag.vy*.5+(e.clientY-drag.ly)/dt*.5;
-      drag.ax=e.clientX-drag.gx;drag.ay=e.clientY-drag.gy;
+      drag.x=e.clientX-drag.gx;drag.y=e.clientY-drag.gy;
       drag.lx=e.clientX;drag.ly=e.clientY;drag.lt=now;
+      place(drag);
     }
   });
-  addEventListener('pointerdown',function(e){      // click = shockwave only
-  if(reduce)return;
-  pulses.push({x:e.clientX,y:e.clientY,t:performance.now(),quiet:true});
-  if(pulses.length>8)pulses.shift();
-});
+  addEventListener('pointerup',release);
+  addEventListener('pointercancel',release);
+  document.addEventListener('mouseleave',function(){M.inside=false});
+  addEventListener('pointerdown',function(e){shock(e.clientX,e.clientY)});   // click = shockwave only
   addEventListener('resize',function(){build();gradient()});
 
   var last=performance.now();
   function loop(now){
-    var dt=Math.min(50,now-last);last=now;
+    var dt=Math.max(0,Math.min(50,now-last));last=now;
     sm.x+=(M.x-sm.x)*.12;sm.y+=(M.y-sm.y)*.12;
+    var sy=scrollY;sv+=(Math.max(-70,Math.min(70,sy-lastSY))-sv)*.3;lastSY=sy;   // smoothed scroll speed
     if(!reduce)drawWeb(now);
     letters(dt);magnets();stormTick(dt);drawFx(now,dt);
     requestAnimationFrame(loop);
