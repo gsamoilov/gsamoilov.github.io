@@ -11,28 +11,40 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e8;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 #world{position:fixed;inset:0;overflow:hidden}
 
-#logo,.orb{
+/* The logo is a colored shape cut out by the PNG (mask). The glow lives on the outer box,
+   because a filter on the masked element itself would get cut off by the mask. */
+#logo{
+  --c:#ff6b00;
   position:absolute;
   top:0;
   left:0;
-  user-select:none;
-  -webkit-user-drag:none;
-  will-change:transform
-}
-
-#logo{
-  --c:#ff6b00;
-  background:var(--c);
-  -webkit-mask:url('/images/dvd.png') center/100% 100% no-repeat;
-  mask:url('/images/dvd.png') center/100% 100% no-repeat;
+  will-change:transform;
   filter:drop-shadow(0 0 14px var(--c));
 }
+
+#shape{
+  width:100%;
+  height:100%;
+  background:var(--c);
+  -webkit-mask-size:100% 100%;
+  mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+  -webkit-mask-position:center;
+  mask-position:center;
 }
 
 .orb{
+  position:absolute;
+  top:0;
+  left:0;
+  height:auto;
   opacity:0;
   pointer-events:none;
-  filter:drop-shadow(0 0 14px rgba(255,107,0,.7))
+  user-select:none;
+  -webkit-user-drag:none;
+  will-change:transform,opacity;
+  filter:drop-shadow(0 0 14px rgba(255,107,0,.7));
 }
 
 /* WALL GLOW: static bar on the wall where the logo hit, holds, then fades */
@@ -121,7 +133,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 </div>
 
 <div id="world">
- <div id="logo" role="img" aria-label="Bouncing logo"></div>
+  <div id="logo" role="img" aria-label="Bouncing logo"><div id="shape"></div></div>
 </div>
 
 <div class="flash" id="flash"></div>
@@ -130,14 +142,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 <script>
 (function(){
 
-  var SRC=[
-    '/images/background.png',
-    '/images/background2.png',
-    '/images/background3.png',
-    '/images/background4.png'
-  ];
+  // ---- the two images this page uses (change the names here if yours differ) ----
+  var LOGO='/images/dvd.png';        // the bouncing picture
+  var CORNER='/images/corner.png';   // the pics that orbit on a corner hit
 
   var logo=document.getElementById('logo'),
+      shape=document.getElementById('shape'),
       world=document.getElementById('world'),
       score=document.getElementById('score'),
       flash=document.getElementById('flash'),
@@ -145,118 +155,90 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
       btn=document.getElementById('pause');
 
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  new Image().src='/images/corner.png';
-  var pics=SRC.map(function(s){
-    var im=new Image();
-    im.src=s;
-    return im;
-  });
 
-  var cur=1,
-      x=0,y=0,
+  var x=0,y=0,
       vx=170,vy=140,
       w=0,h=0,
+      ratio=1,                       // height / width of the logo image
       hits=0,
       paused=false,
       last=0;
 
-  var tPulse=99999,
-      tOrb=99999,
+  var tOrb=99999,
       ang=0,
       orbiting=false,
       DUR=3800,
       lastWallHit=0;
 
-  // RECTANGULAR LOGO SIZE (3:2)
+  // logo shape comes from the PNG itself
+  shape.style.webkitMaskImage="url('"+LOGO+"')";
+  shape.style.maskImage="url('"+LOGO+"')";
 
-function setSize(){
-  var im=pics[cur],
-      r=(im.naturalWidth&&im.naturalHeight)?im.naturalHeight/im.naturalWidth:1;
-  w=Math.min(300,Math.max(160,innerWidth*.2));
-  h=w*r;
-  if(h>innerHeight*.4){h=innerHeight*.4;w=h/r;}   // tall images never get too big
-  logo.style.width=w+'px';
-  logo.style.height=h+'px';
-}
+  // SIZE: same as the original version (110-220px wide, 16% of the screen),
+  // height follows the picture's real aspect ratio. Never taller than half the screen.
+  function setSize(){
+    w=Math.min(220,Math.max(110,innerWidth*.16));
+    h=w*ratio;
+    if(h>innerHeight*.5){h=innerHeight*.5;w=h/ratio;}
+    logo.style.width=w+'px';
+    logo.style.height=h+'px';
+    orbs.forEach(function(o){o.style.width=(w*.55)+'px'});
+  }
 
-  // 6 ORBITING PICTURES
-
+  // 12 ORBITING PICTURES (two rings of six)
   var orbs=[];
-
   for(var k=0;k<12;k++){
     var o=document.createElement('img');
     o.className='orb';
     o.alt='';
     o.draggable=false;
+    o.src=CORNER;
     world.appendChild(o);
     orbs.push(o);
   }
 
-  function swap(){
-  var hue=Math.floor(Math.random()*360);
-  logo.style.setProperty('--c','hsl('+hue+',100%,60%)');
-}
-
-  // WALL IMPACT GLOW
-
- function wallImpact(horizontal){
-  if(reduce)return;
-  var d=document.createElement('div'),side;
-  if(horizontal){
-    side=x<innerWidth/2?'l':'r';
-    d.style.top=y+'px';
-    d.style.height=h+'px';
-    d.style[side==='l'?'left':'right']='0';
-  }else{
-    side=y<innerHeight/2?'t':'b';
-    d.style.left=x+'px';
-    d.style.width=w+'px';
-    d.style[side==='t'?'top':'bottom']='0';
+  // new random color (called on every wall hit)
+  function recolor(){
+    var hue=Math.floor(Math.random()*360);
+    logo.style.setProperty('--c','hsl('+hue+',100%,60%)');
   }
-  d.className='wall wall-'+side;
-  world.appendChild(d);
-  setTimeout(function(){d.remove()},2900);
-}
 
-  // ORBIT ANIMATION
+  // WALL GLOW
+  function wallImpact(horizontal){
+    if(reduce)return;
+    var d=document.createElement('div'),side;
+    if(horizontal){
+      side=x<innerWidth/2?'l':'r';
+      d.style.top=y+'px';
+      d.style.height=h+'px';
+      d.style[side==='l'?'left':'right']='0';
+    }else{
+      side=y<innerHeight/2?'t':'b';
+      d.style.left=x+'px';
+      d.style.width=w+'px';
+      d.style[side==='t'?'top':'bottom']='0';
+    }
+    d.className='wall wall-'+side;
+    world.appendChild(d);
+    setTimeout(function(){d.remove()},2900);
+  }
 
-  function startOrbit(){
-
-    var others=[0,1,2,3].filter(function(i){
-      return i!==cur;
-    });
-
-    orbs.forEach(function(o,k){
-  o.src='/images/corner.png';
-  o.style.width=(w*.55)+'px';
-  o.style.height='auto';
-  o.style.objectFit='';
-});
+  // CORNER HIT
+  function cornerHit(){
+    hits++;
+    score.textContent='Corner hits: '+hits;
 
     tOrb=0;
     ang=0;
     orbiting=true;
-  }
-
-  // CORNER HIT
-
-  function cornerHit(){
-
-    hits++;
-    score.textContent='Corner hits: '+hits;
-
-    startOrbit();
-    tPulse=0;
 
     pop.classList.remove('go');
     void pop.offsetWidth;
     pop.classList.add('go');
 
     if(!reduce){
-
       flash.style.background='rgba(255,190,110,.8)';
       flash.classList.add('on');
-
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
           flash.classList.remove('on');
@@ -265,8 +247,7 @@ function setSize(){
     }
   }
 
-  // MAIN ANIMATION LOOP
-
+  // MAIN LOOP
   function tick(now){
 
     if(!last)last=now;
@@ -276,7 +257,6 @@ function setSize(){
 
     if(!paused){
 
-      tPulse+=dt*1000;
       tOrb+=dt*1000;
 
       x+=vx*dt;
@@ -287,8 +267,7 @@ function setSize(){
           mx=innerWidth-w,
           my=innerHeight-h;
 
-      // HORIZONTAL COLLISIONS
-
+      // horizontal walls
       if(x<=0){
         x=0;
         vx=Math.abs(vx);
@@ -302,8 +281,7 @@ function setSize(){
         wallImpact(true);
       }
 
-      // VERTICAL COLLISIONS
-
+      // vertical walls
       if(y<=0){
         y=0;
         vy=Math.abs(vy);
@@ -317,13 +295,9 @@ function setSize(){
         wallImpact(false);
       }
 
-      if(hx||hy){
-        swap();
-        tPulse=0;
-      }
+      if(hx||hy)recolor();
 
-      // CORNER DETECTION
-
+      // corner detection
       var nearX=x<=24||x>=mx-24;
       var nearY=y<=24||y>=my-24;
 
@@ -335,12 +309,10 @@ function setSize(){
         lastWallHit=now;
       }
 
-      // LOGO PULSE
+      // the logo only moves: no scaling, no rotation
+      logo.style.transform='translate('+x+'px,'+y+'px)';
 
-    logo.style.transform='translate('+x+'px,'+y+'px)';
-
-      // ORBITERS
-
+      // orbiters spin fast, slow down, then fade out
       if(orbiting){
 
         var p=tOrb/DUR;
@@ -387,12 +359,12 @@ function setSize(){
     requestAnimationFrame(tick);
   }
 
-  // START
+  // START (after the logo image has loaded, so we know its real shape)
+  function start(img){
 
-  function start(){
+    ratio=(img.naturalWidth&&img.naturalHeight)?img.naturalHeight/img.naturalWidth:1;
 
-    swap();
-
+    recolor();
     setSize();
 
     x=Math.random()*Math.max(1,innerWidth-w);
@@ -405,20 +377,15 @@ function setSize(){
   }
 
   // PAUSE BUTTON
-
   btn.addEventListener('click',function(){
-
     paused=!paused;
-
     btn.textContent=paused?'Resume':'Pause';
-
     last=0;
   });
 
   addEventListener('resize',setSize);
 
   // SECRET DEBUG MENU: TYPE "debug"
-
   (function(){
 
     var st=document.createElement('style');
@@ -496,20 +463,11 @@ function setSize(){
 
   })();
 
-  var first=pics[cur];
-
-  if(first.complete&&first.naturalWidth){
-    start();
-  }
-  else{
-
-    first.addEventListener('load',start);
-
-    first.addEventListener('error',function(){
-      score.textContent='Could not load images/background2.png';
-    });
-
-  }
+  // load the logo image, then go
+  var logoImg=new Image();
+  logoImg.onload=function(){start(logoImg)};
+  logoImg.onerror=function(){score.textContent='Could not load '+LOGO};
+  logoImg.src=LOGO;
 
 })();
 </script>
