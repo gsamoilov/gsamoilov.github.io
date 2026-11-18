@@ -145,7 +145,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
       btn=document.getElementById('pause');
 
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+  new Image().src='/images/corner.png';
   var pics=SRC.map(function(s){
     var im=new Image();
     im.src=s;
@@ -226,7 +226,7 @@ function setSize(){
     });
 
     orbs.forEach(function(o,k){
-      o.src=SRC[others[k%3]];
+      o.src='/images/corner.png';
       o.style.width=(w*.55)+'px';
     });
 
