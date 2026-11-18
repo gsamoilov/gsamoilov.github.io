@@ -23,14 +23,22 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1
 a{color:inherit}
 :focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
 
-.glow{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+.glow{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;transition:filter .6s}
 .glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.34}
 .glow i:nth-child(1){width:46vw;height:46vw;background:var(--red);top:-12vw;left:-10vw}
 .glow i:nth-child(2){width:40vw;height:40vw;background:var(--yellow);bottom:-14vw;right:-8vw;opacity:.22}
 .glow i:nth-child(3){width:28vw;height:28vw;background:var(--orange);top:40vh;left:55vw;opacity:.18}
+body.storm .glow{filter:hue-rotate(190deg) saturate(1.5)}
 
-/* the web: canvas CSS size must equal the viewport or hi-dpi screens draw it offset */
-#web{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+/* canvases: CSS size must equal the viewport or hi-dpi screens draw everything offset */
+#web,#fx{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none}
+#web{z-index:-1}
+#fx{z-index:40}
+
+#toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:50;pointer-events:none;opacity:0;
+  font-weight:700;font-size:clamp(1.4rem,5vw,3rem);letter-spacing:-.02em;text-shadow:0 0 30px var(--yellow)}
+#toast.go{animation:toast 1.8s ease-out}
+@keyframes toast{0%{opacity:0;transform:translateX(-50%) scale(.8)}15%{opacity:1;transform:translateX(-50%) scale(1.06)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1)}}
 
 nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
   padding:18px clamp(20px,5vw,56px);background:rgba(255,100,20,.06);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
@@ -44,8 +52,14 @@ nav a:hover{color:var(--ink)}
 .hero{height:380vh;position:relative}
 .stage{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;
   padding:0 clamp(20px,6vw,90px);will-change:opacity}
-.hello{font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;will-change:transform;
-  background:linear-gradient(100deg,var(--ink) 15%,var(--yellow) 50%,var(--orange) 75%,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hello{--hg:linear-gradient(100deg,var(--ink) 15%,var(--yellow) 50%,var(--orange) 75%,var(--red));
+  font-size:clamp(3.4rem,13vw,11rem);font-weight:700;letter-spacing:-.05em;line-height:.95;will-change:transform;color:var(--ink)}
+/* every letter carries a slice of the same gradient, so they can be pulled off and still look right */
+.ltr{display:inline-block;position:relative;background:var(--hg);background-size:var(--bw,100%) 100%;background-position:var(--bx,0) 0;background-repeat:no-repeat;
+  -webkit-background-clip:text;background-clip:text;color:transparent;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;will-change:transform}
+.ltr.live{z-index:30;cursor:grabbing}
+.ltr.zapped{animation:zapflash .55s ease-out}
+@keyframes zapflash{0%{filter:brightness(4) drop-shadow(0 0 20px #ffd23f)}100%{filter:none}}
 .name{font-size:clamp(2rem,7.5vw,6.2rem);font-weight:500;letter-spacing:-.04em;line-height:1.05;margin-top:.15em;min-height:1.1em}
 .name span{display:inline-block;opacity:0;will-change:transform,opacity}
 .name .sp{width:.28em}
@@ -70,6 +84,9 @@ h2{font-size:clamp(1.8rem,4.5vw,3rem);letter-spacing:-.035em;line-height:1.1;mar
 .card{display:block;text-decoration:none;padding:26px;border-radius:20px;
   transition:transform .25s,border-color .25s,box-shadow .25s}
 .card:hover{transform:translateY(-5px);border-color:rgba(255,170,80,.7);box-shadow:0 0 50px rgba(255,90,0,.26),inset 0 1px 0 rgba(255,230,200,.25)}
+/* magnetic cards: movement comes from JS, so no CSS transform transition here */
+.card.mag{will-change:transform;transition:border-color .25s,box-shadow .25s}
+.card.mag:hover{transform:none}
 .card h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:6px;position:relative}
 .card p{color:var(--muted);font-size:.97rem;position:relative}
 .card.ph{border-style:dashed}
@@ -92,6 +109,8 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 <body>
 <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
 <canvas id="web" aria-hidden="true"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="toast" aria-hidden="true">⚡ KONAMI ⚡</div>
 
 <nav>
   <b>greg.</b>
@@ -132,9 +151,10 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
     <h2>Fun pages</h2>
     <p class="lead">Extremely useful. Boosts your IQ by 200%, expert-verified. Pick one.</p>
     <div class="grid">
-      <a class="card glass" href="/pages/dvd.html"><h3>Bouncing logo</h3><p>The classic DVD screensaver. Will it hit the corner?</p></a>
-      <a class="card glass" href="/pages/cursors.html"><h3>Cursor lab</h3><p>Fluid, ribbons, swarms and more to play with.</p></a>
-      <a class="card glass" href="/pages/themes.html"><h3>Theme switcher</h3><p>Liquid glass, embers, brutalist and terminal looks.</p></a>
+      <a class="card mag glass" href="/pages/dvd.html"><h3>Bouncing logo</h3><p>The classic DVD screensaver. Will it hit the corner?</p></a>
+      <a class="card mag glass" href="/pages/cursors.html"><h3>Cursor lab</h3><p>Fluid, ribbons, swarms and more to play with.</p></a>
+      <a class="card mag glass" href="/pages/themes.html"><h3>Theme switcher</h3><p>Liquid glass, embers, brutalist and terminal looks.</p></a>
+      <a class="card mag glass" href="/pages/vs.html"><h3>VS arena</h3><p>Upload two fighters, pick their powers, and let them fight.</p></a>
     </div>
   </section>
 </main>
@@ -196,46 +216,236 @@ document.addEventListener('pointermove',function(e){
   g.style.setProperty('--py',(e.clientY-r.top)+'px');
 });
 
-/* the web: a mesh whose strands get tugged toward your cursor and spring back */
+/* ================= the living web: energy, lightning, draggable letters, magnets, konami ================= */
 (function(){
-  var cv=document.getElementById('web'),c=cv.getContext('2d'),W=0,H=0,nodes=[],cols=0,rows=0,ST=46,raf=0;
-  var M={x:innerWidth/2,y:innerHeight/2},sm={x:M.x,y:M.y};
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var wcv=document.getElementById('web'),wc=wcv.getContext('2d'),
+      fcv=document.getElementById('fx'),fc=fcv.getContext('2d'),
+      toast=document.getElementById('toast');
+  var W=0,H=0,ST=46,cols=0,rows=0,nodes=[];
+  var M={x:innerWidth/2,y:innerHeight/2,inside:false},sm={x:M.x,y:M.y};
+  var pulses=[],bolts=[],storm=0,stormNext=0,flash=0;
 
   function build(){
-    var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);
+    var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;
+    wcv.width=fcv.width=W*d;wcv.height=fcv.height=H*d;
+    wc.setTransform(d,0,0,d,0,0);fc.setTransform(d,0,0,d,0,0);
     cols=Math.ceil(W/ST)+3;rows=Math.ceil(H/ST)+3;nodes=[];
     for(var j=0;j<rows;j++)for(var i=0;i<cols;i++){var hx=(i-1)*ST,hy=(j-1)*ST;nodes.push({hx:hx,hy:hy,x:hx,y:hy,vx:0,vy:0})}
-    draw();
+    drawWeb(performance.now());
   }
-  function draw(){
-    var i,j,p,q;c.clearRect(0,0,W,H);
+
+  /* ---- energy pulses travel outward through the mesh ---- */
+  function zap(x,y){if(reduce)return;pulses.push({x:x,y:y,t:performance.now()});if(pulses.length>8)pulses.shift()}
+
+  /* ---- jagged lightning bolt (midpoint displacement) ---- */
+  function bolt(x1,y1,x2,y2,life){
+    if(reduce)return;
+    var pts=[[x1,y1],[x2,y2]],it,i;
+    for(it=0;it<5;it++){
+      var np=[pts[0]];
+      for(i=1;i<pts.length;i++){
+        var a=pts[i-1],b=pts[i],len=Math.hypot(b[0]-a[0],b[1]-a[1])||1,off=len*.17*(Math.random()*2-1);
+        np.push([(a[0]+b[0])/2-(b[1]-a[1])/len*off,(a[1]+b[1])/2+(b[0]-a[0])/len*off],b);
+      }
+      pts=np;
+    }
+    bolts.push({pts:pts,t:performance.now(),life:life||380,cool:storm>0});
+  }
+
+  function drawWeb(now){
+    var i,j,p,q,u,k,stm=storm>0;
+    while(pulses.length&&now-pulses[0].t>1500)pulses.shift();
     for(i=0;i<nodes.length;i++){
       p=nodes[i];
-      var k=Math.max(0,1-Math.hypot(sm.x-p.hx,sm.y-p.hy)/260);k=k*k*.62;
+      k=Math.max(0,1-Math.hypot(sm.x-p.hx,sm.y-p.hy)/260);k=k*k*.62;
       p.vx=(p.vx+(p.hx+(sm.x-p.hx)*k-p.x)*.14)*.74;p.vy=(p.vy+(p.hy+(sm.y-p.hy)*k-p.y)*.14)*.74;
+      for(j=0;j<pulses.length;j++){          // the wavefront shoves nodes outward as it passes
+        u=pulses[j];var age=now-u.t,dx=p.x-u.x,dy=p.y-u.y,d=Math.hypot(dx,dy)||1,
+            g=Math.exp(-Math.pow((d-age*.9)/32,2))*(1-age/1500);
+        if(g>.02){p.vx+=dx/d*g*3.2;p.vy+=dy/d*g*3.2}
+      }
       p.x+=p.vx;p.y+=p.vy;
     }
-    c.lineWidth=1;
+    wc.clearRect(0,0,W,H);wc.lineWidth=1;
+    var strong=[],weak=[];
+    function lit(a,b){
+      var mx=(a.x+b.x)/2,my=(a.y+b.y)/2,best=0;
+      for(var n=0;n<pulses.length;n++){
+        var v=pulses[n],ag=now-v.t,g=Math.exp(-Math.pow((Math.hypot(mx-v.x,my-v.y)-ag*.9)/38,2))*(1-ag/1500);
+        if(g>best)best=g;
+      }
+      if(best>.5)strong.push([a,b]);else if(best>.1)weak.push([a,b]);
+    }
     for(j=0;j<rows;j++)for(i=0;i<cols;i++){
       p=nodes[j*cols+i];
       var e=Math.hypot(p.x-p.hx,p.y-p.hy);
-      c.strokeStyle='rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70)+')';
-      c.beginPath();
-      if(i<cols-1){q=nodes[j*cols+i+1];c.moveTo(p.x,p.y);c.lineTo(q.x,q.y)}
-      if(j<rows-1){q=nodes[(j+1)*cols+i];c.moveTo(p.x,p.y);c.lineTo(q.x,q.y)}
-      c.stroke();
-      if(e>6){c.fillStyle='rgba(255,200,120,'+Math.min(.9,e/50)+')';c.beginPath();c.arc(p.x,p.y,1.6,0,6.283);c.fill()}
+      wc.strokeStyle=stm?'rgba(140,190,255,'+Math.min(.85,.12+e/70)+')':'rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70)+')';
+      wc.beginPath();
+      if(i<cols-1){q=nodes[j*cols+i+1];wc.moveTo(p.x,p.y);wc.lineTo(q.x,q.y);if(pulses.length)lit(p,q)}
+      if(j<rows-1){q=nodes[(j+1)*cols+i];wc.moveTo(p.x,p.y);wc.lineTo(q.x,q.y);if(pulses.length)lit(p,q)}
+      wc.stroke();
+      if(e>6){wc.fillStyle='rgba(255,200,120,'+Math.min(.9,e/50)+')';wc.beginPath();wc.arc(p.x,p.y,1.6,0,6.283);wc.fill()}
     }
+    function arcs(arr,gs,gw,cs,cw){        // energized strands: soft glow pass + hot core pass
+      if(!arr.length)return;
+      wc.beginPath();
+      arr.forEach(function(s){
+        var a=s[0],b=s[1];
+        wc.moveTo(a.x,a.y);wc.lineTo((a.x+b.x)/2+(Math.random()-.5)*9,(a.y+b.y)/2+(Math.random()-.5)*9);wc.lineTo(b.x,b.y);
+      });
+      wc.strokeStyle=gs;wc.lineWidth=gw;wc.stroke();wc.strokeStyle=cs;wc.lineWidth=cw;wc.stroke();
+    }
+    arcs(weak,stm?'rgba(120,180,255,.22)':'rgba(255,150,40,.22)',5,stm?'rgba(200,230,255,.6)':'rgba(255,215,140,.6)',1.2);
+    arcs(strong,stm?'rgba(120,180,255,.35)':'rgba(255,150,40,.35)',9,stm?'rgba(240,250,255,1)':'rgba(255,248,200,1)',2.4);
   }
-  function loop(){
+
+  function drawFx(now,dt){
+    fc.clearRect(0,0,W,H);
+    if(flash>0){fc.fillStyle='rgba(215,235,255,'+flash*.22+')';fc.fillRect(0,0,W,H);flash=Math.max(0,flash-dt/170)}
+    bolts=bolts.filter(function(b){return now-b.t<b.life});
+    bolts.forEach(function(b){
+      var a=1-(now-b.t)/b.life;
+      fc.lineJoin='round';fc.lineCap='round';
+      [[10,b.cool?'rgba(90,160,255,':'rgba(255,120,20,',.28],[4,b.cool?'rgba(170,215,255,':'rgba(255,190,90,',.7],[1.6,'rgba(255,255,255,',1]].forEach(function(s){
+        fc.beginPath();b.pts.forEach(function(p,i){i?fc.lineTo(p[0],p[1]):fc.moveTo(p[0],p[1])});
+        fc.strokeStyle=s[1]+(a*s[2])+')';fc.lineWidth=s[0];fc.stroke();
+      });
+    });
+  }
+
+  /* ---- Hello, letters: grab them, fling them, they snap home with lightning ---- */
+  var helloEl=document.getElementById('hello'),L=[],drag=null;
+  (function(){
+    var t='Hello,';helloEl.textContent='';helloEl.setAttribute('aria-label',t);
+    t.split('').forEach(function(ch){
+      var s=document.createElement('span');s.className='ltr';s.textContent=ch;s.setAttribute('aria-hidden','true');
+      helloEl.appendChild(s);
+      var o={el:s,ox:0,oy:0,ax:0,ay:0,vx:0,vy:0,rot:0,vr:0,st:0,t:0,gx:0,gy:0,lx:0,ly:0,lt:0};  // st: 0 home, 1 held, 2 flying
+      L.push(o);
+      s.addEventListener('pointerdown',function(e){e.preventDefault();grab(o,e)});
+    });
+  })();
+  function gradient(){
+    var w=helloEl.offsetWidth,base=helloEl.offsetLeft;
+    L.forEach(function(o){o.el.style.setProperty('--bw',w+'px');o.el.style.setProperty('--bx',-(o.el.offsetLeft-base)+'px')});
+  }
+  function home(o){
+    var r=o.el.getBoundingClientRect();
+    return{x:r.left+r.width/2-o.ox,y:r.top+r.height/2-o.oy,hw:r.width/2,hh:r.height/2};
+  }
+  function grab(o,e){
+    var h=home(o),cx=h.x+o.ox,cy=h.y+o.oy;
+    o.ax=cx;o.ay=cy;o.gx=e.clientX-cx;o.gy=e.clientY-cy;o.vx=o.vy=o.vr=0;
+    o.lx=e.clientX;o.ly=e.clientY;o.lt=performance.now();o.st=1;o.t=0;
+    o.el.classList.add('live');drag=o;
+  }
+  function release(){
+    if(!drag)return;
+    var o=drag;drag=null;
+    if(performance.now()-o.lt>90){o.vx=0;o.vy=0}   // stopped before letting go = gentle drop
+    o.vr=o.vx*.006+(Math.random()-.5)*.004;o.st=2;o.t=0;
+  }
+  function kick(o){
+    var h=home(o);o.ax=h.x+o.ox;o.ay=h.y+o.oy;
+    o.vx=(Math.random()-.5)*1.8;o.vy=-(.5+Math.random()*1.1);o.vr=(Math.random()-.5)*.02;
+    o.st=2;o.t=0;o.el.classList.add('live');
+  }
+  function zapBack(o,h){
+    bolt(o.ax,o.ay,h.x,h.y,460);zap(h.x,h.y);
+    o.ox=o.oy=o.rot=o.vx=o.vy=o.vr=0;o.st=0;o.el.style.transform='';
+    o.el.classList.remove('live','zapped');void o.el.offsetWidth;o.el.classList.add('zapped');
+  }
+  function letters(dt){
+    L.forEach(function(o){
+      if(o.st===0)return;
+      var h=home(o);
+      if(o.st===2){
+        o.t+=dt;
+        o.vy+=.0021*dt;o.ax+=o.vx*dt;o.ay+=o.vy*dt;o.rot+=o.vr*dt;
+        if(o.ax<h.hw){o.ax=h.hw;o.vx=Math.abs(o.vx)*.65}
+        if(o.ax>innerWidth-h.hw){o.ax=innerWidth-h.hw;o.vx=-Math.abs(o.vx)*.65}
+        if(o.ay<h.hh){o.ay=h.hh;o.vy=Math.abs(o.vy)*.6}
+        if(o.ay>innerHeight-h.hh){o.ay=innerHeight-h.hh;o.vy=-Math.abs(o.vy)*.55;o.vx*=.9;o.vr*=.8}
+        if(o.t>2100){zapBack(o,h);return}      // short hang time, then zap home
+      }
+      o.ox=o.ax-h.x;o.oy=o.ay-h.y;
+      o.el.style.transform='translate3d('+o.ox+'px,'+o.oy+'px,0) rotate('+o.rot+'rad)';
+    });
+  }
+
+  /* ---- magnetic fun-page cards: lean toward the cursor and tilt in 3D ---- */
+  var mags=[].map.call(document.querySelectorAll('#fun .card'),function(el){return{el:el,tx:0,ty:0,rx:0,ry:0,s:1}});
+  function pageRect(el){var l=0,t=0,n=el;while(n){l+=n.offsetLeft;t+=n.offsetTop;n=n.offsetParent}return{l:l-scrollX,t:t-scrollY,w:el.offsetWidth,h:el.offsetHeight}}
+  function magnets(){
+    if(reduce)return;
+    mags.forEach(function(m){
+      var r=pageRect(m.el),cx=r.l+r.w/2,cy=r.t+r.h/2,dx=M.x-cx,dy=M.y-cy,hw=r.w/2,hh=r.h/2,
+          out=Math.hypot(Math.max(0,Math.abs(dx)-hw),Math.max(0,Math.abs(dy)-hh)),
+          f=M.inside?Math.max(0,1-out/120):0;
+      f=f*f*(3-2*f);
+      var nx=Math.max(-1,Math.min(1,dx/hw)),ny=Math.max(-1,Math.min(1,dy/hh)),
+          T={tx:nx*12*f,ty:ny*12*f,rx:-ny*11*f,ry:nx*14*f,s:1+.06*f};
+      for(var k in T)m[k]+=(T[k]-m[k])*.15;
+      m.el.style.transform='perspective(800px) translate3d('+m.tx+'px,'+m.ty+'px,0) rotateX('+m.rx+'deg) rotateY('+m.ry+'deg) scale('+m.s+')';
+    });
+  }
+
+  /* ---- konami code: up up down down left right left right b a ---- */
+  var KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'],ki=0;
+  addEventListener('keydown',function(e){
+    var k=e.key.length===1?e.key.toLowerCase():e.key;
+    if(k===KONAMI[ki]){ki++;if(ki===KONAMI.length){ki=0;startStorm()}}
+    else ki=(k===KONAMI[0])?1:0;
+  });
+  function startStorm(){
+    if(reduce||storm>0)return;
+    storm=7000;stormNext=0;flash=1;document.body.classList.add('storm');
+    toast.classList.remove('go');void toast.offsetWidth;toast.classList.add('go');
+    L.forEach(kick);
+  }
+  function strike(){
+    var x=Math.random()*W,y=H*(.25+Math.random()*.6);
+    bolt(x+(Math.random()-.5)*160,0,x,y,520);zap(x,y);flash=1;
+  }
+  function stormTick(dt){
+    if(storm<=0)return;
+    storm-=dt;stormNext-=dt;
+    if(stormNext<=0){stormNext=220+Math.random()*320;strike()}
+    if(storm<=0)document.body.classList.remove('storm');
+  }
+
+  /* ---- input ---- */
+  addEventListener('pointermove',function(e){
+    M.x=e.clientX;M.y=e.clientY;M.inside=true;
+    if(drag&&drag.st===1){
+      var now=performance.now(),dt=Math.max(8,now-drag.lt);
+      drag.vx=drag.vx*.5+(e.clientX-drag.lx)/dt*.5;drag.vy=drag.vy*.5+(e.clientY-drag.ly)/dt*.5;
+      drag.ax=e.clientX-drag.gx;drag.ay=e.clientY-drag.gy;
+      drag.lx=e.clientX;drag.ly=e.clientY;drag.lt=now;
+    }
+  });
+  addEventListener('pointerup',release);
+  addEventListener('pointercancel',release);
+  document.addEventListener('mouseleave',function(){M.inside=false});
+  addEventListener('pointerdown',function(e){          // every click sends energy through the web
+    if(reduce)return;
+    zap(e.clientX,e.clientY);
+    for(var i=0;i<3;i++){var a=Math.random()*6.283,l=50+Math.random()*90;bolt(e.clientX,e.clientY,e.clientX+Math.cos(a)*l,e.clientY+Math.sin(a)*l,260)}
+  });
+  addEventListener('resize',function(){build();gradient()});
+
+  var last=performance.now();
+  function loop(now){
+    var dt=Math.min(50,now-last);last=now;
     sm.x+=(M.x-sm.x)*.12;sm.y+=(M.y-sm.y)*.12;
-    draw();raf=requestAnimationFrame(loop);
+    if(!reduce)drawWeb(now);
+    letters(dt);magnets();stormTick(dt);drawFx(now,dt);
+    requestAnimationFrame(loop);
   }
-  addEventListener('pointermove',function(e){M.x=e.clientX;M.y=e.clientY});
-  addEventListener('resize',build);
-  build();
-  if(!reduce)raf=requestAnimationFrame(loop);
+  build();gradient();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(gradient);
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
