@@ -21,8 +21,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 }
 
 #logo{
-  filter:drop-shadow(0 0 12px rgba(255,107,0,.45));
-  transform-origin:center;
+  --c:#ff6b00;
+  background:var(--c);
+  -webkit-mask:url('/images/dvd.png') center/100% 100% no-repeat;
+  mask:url('/images/dvd.png') center/100% 100% no-repeat;
+  filter:drop-shadow(0 0 14px var(--c));
+}
 }
 
 .orb{
@@ -117,7 +121,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 </div>
 
 <div id="world">
-  <img id="logo" alt="Bouncing logo" draggable="false">
+ <div id="logo" role="img" aria-label="Bouncing logo"></div>
 </div>
 
 <div class="flash" id="flash"></div>
@@ -165,14 +169,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
   // RECTANGULAR LOGO SIZE (3:2)
 
-  function setSize(){
-    w=Math.min(260,Math.max(150,innerWidth*.18));
-    h=w*0.667;
-
-    logo.style.width=w+'px';
-    logo.style.height=h+'px';
-    logo.style.objectFit='fill';
-  }
+function setSize(){
+  var im=pics[cur],
+      s=Math.min(1,innerWidth*.5/im.naturalWidth,innerHeight*.5/im.naturalHeight);
+  w=im.naturalWidth*s;
+  h=im.naturalHeight*s;
+  logo.style.width=w+'px';
+  logo.style.height=h+'px';
+}
 
   // 6 ORBITING PICTURES
 
@@ -188,17 +192,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
   }
 
   function swap(){
-    var n;
-    do{
-      n=Math.floor(Math.random()*SRC.length);
-    }while(n===cur);
-
-    cur=n;
-    logo.src=SRC[cur];
-
-    x=Math.min(x,Math.max(0,innerWidth-w));
-    y=Math.min(y,Math.max(0,innerHeight-h));
-  }
+  var hue=Math.floor(Math.random()*360);
+  logo.style.setProperty('--c','hsl('+hue+',100%,60%)');
+}
 
   // WALL IMPACT GLOW
 
@@ -392,7 +388,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
   function start(){
 
-    logo.src=SRC[cur];
+    swap();
 
     setSize();
 
