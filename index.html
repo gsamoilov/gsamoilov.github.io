@@ -12,6 +12,9 @@
 :root{
   --bg:#0c0705; --ink:#fff4e8; --muted:#b9a08c; --line:rgba(255,190,140,.16);
   --red:#ff3d1f; --orange:#ff6b00; --yellow:#ffb703;
+  /* glass surface (same recipe as the Ember theme) */
+  --g-bg:rgba(255,100,20,.07); --g-bd:rgba(255,150,60,.35); --g-sh:0 0 40px rgba(255,80,0,.14),inset 0 1px 0 rgba(255,220,180,.16);
+  --spec:rgba(255,170,60,.22);
   --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -20,15 +23,18 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1
 a{color:inherit}
 :focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
 
-.glow{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.glow{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
 .glow i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.34}
 .glow i:nth-child(1){width:46vw;height:46vw;background:var(--red);top:-12vw;left:-10vw}
 .glow i:nth-child(2){width:40vw;height:40vw;background:var(--yellow);bottom:-14vw;right:-8vw;opacity:.22}
 .glow i:nth-child(3){width:28vw;height:28vw;background:var(--orange);top:40vh;left:55vw;opacity:.18}
 
+/* the web: canvas CSS size must equal the viewport or hi-dpi screens draw it offset */
+#web{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+
 nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
-  padding:18px clamp(20px,5vw,56px);background:rgba(12,7,5,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--line)}
+  padding:18px clamp(20px,5vw,56px);background:rgba(255,100,20,.06);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
+  border-bottom:1px solid var(--g-bd);box-shadow:0 8px 30px rgba(255,80,0,.08)}
 nav b{font-weight:700;letter-spacing:-.02em}
 nav ul{display:flex;gap:clamp(14px,3vw,30px);list-style:none;font-size:.95rem;color:var(--muted)}
 nav a{text-decoration:none;transition:color .2s}
@@ -50,22 +56,30 @@ nav a:hover{color:var(--ink)}
 section.s{max-width:1080px;margin:0 auto;padding:clamp(70px,12vh,130px) clamp(20px,5vw,56px)}
 h2{font-size:clamp(1.8rem,4.5vw,3rem);letter-spacing:-.035em;line-height:1.1;margin-bottom:22px}
 .lead{color:var(--muted);font-size:1.15rem;max-width:58ch}
+
+/* glass boxes: translucent, blurred, glowing edge, and a highlight that follows the pointer */
+.glass{position:relative;overflow:hidden;background:var(--g-bg);border:1px solid var(--g-bd);box-shadow:var(--g-sh);
+  backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%)}
+.glass::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(240px circle at var(--px,50%) var(--py,0%),var(--spec),transparent 70%)}
+
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
-.chips span{padding:7px 16px;border:1px solid var(--line);border-radius:99px;font-size:.92rem;background:rgba(255,160,80,.06)}
+.chips span{padding:7px 16px;border-radius:99px;font-size:.92rem}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:34px}
-.card{display:block;text-decoration:none;padding:26px;border:1px solid var(--line);border-radius:20px;
-  background:rgba(255,120,40,.05);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:transform .25s,border-color .25s,background .25s}
-.card:hover{transform:translateY(-5px);border-color:rgba(255,160,70,.55);background:rgba(255,120,40,.1)}
-.card h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:6px}
-.card p{color:var(--muted);font-size:.97rem}
+.card{display:block;text-decoration:none;padding:26px;border-radius:20px;
+  transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-5px);border-color:rgba(255,170,80,.7);box-shadow:0 0 50px rgba(255,90,0,.26),inset 0 1px 0 rgba(255,230,200,.25)}
+.card h3{font-size:1.25rem;letter-spacing:-.02em;margin-bottom:6px;position:relative}
+.card p{color:var(--muted);font-size:.97rem;position:relative}
 .card.ph{border-style:dashed}
 
 footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
-.mail{display:inline-block;margin-top:14px;padding:14px 30px;border-radius:99px;font-weight:500;text-decoration:none;color:#1a0a04;
-  background:linear-gradient(100deg,var(--yellow),var(--orange) 55%,var(--red));transition:transform .2s}
-.mail:hover{transform:scale(1.05)}
+.mail{display:inline-block;margin-top:14px;padding:14px 30px;border-radius:99px;font-weight:500;text-decoration:none;color:var(--ink);
+  background:linear-gradient(100deg,rgba(255,183,3,.3),rgba(255,107,0,.28) 55%,rgba(255,61,31,.3));border-color:rgba(255,180,90,.6);
+  transition:transform .2s,box-shadow .2s}
+.mail:hover{transform:scale(1.05);box-shadow:0 0 36px rgba(255,100,0,.4),inset 0 1px 0 rgba(255,230,200,.3)}
+.mail span{position:relative}
 
 @media (max-width:560px){nav ul li:nth-child(n+3){display:none}}
 @media (prefers-reduced-motion:reduce){
@@ -77,6 +91,7 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 </head>
 <body>
 <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+<canvas id="web" aria-hidden="true"></canvas>
 
 <nav>
   <b>greg.</b>
@@ -100,16 +115,16 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
   <section class="s" id="about">
     <h2>This is my playground.</h2>
     <p class="lead">Obviously, I am not taking time out of my day to learn html and javascript. Please enjoy my vibecoded experiments.</p>
-    <div class="chips"><span>tung</span><span>tung</span><span>tung</span><span>sahur</span><span>[placeholder]</span></div>
+    <div class="chips"><span class="glass">tung</span><span class="glass">tung</span><span class="glass">tung</span><span class="glass">sahur</span><span class="glass">[placeholder]</span></div>
   </section>
 
   <section class="s" id="work">
     <h2>Selected work</h2>
     <p class="lead">Placeholder projects.</p>
     <div class="grid">
-      <a class="card ph" href="#"><h3>Project one</h3><p>tung tung tung sahur</p></a>
-      <a class="card ph" href="#"><h3>Project two</h3><p>A short line about what it is and what you built.</p></a>
-      <a class="card ph" href="#"><h3>Project three</h3><p>A short line about what it is and what you built.</p></a>
+      <a class="card glass ph" href="#"><h3>Project one</h3><p>tung tung tung sahur</p></a>
+      <a class="card glass ph" href="#"><h3>Project two</h3><p>A short line about what it is and what you built.</p></a>
+      <a class="card glass ph" href="#"><h3>Project three</h3><p>A short line about what it is and what you built.</p></a>
     </div>
   </section>
 
@@ -117,9 +132,9 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
     <h2>Fun pages</h2>
     <p class="lead">Extremely useful. Boosts your IQ by 200%, expert-verified. Pick one.</p>
     <div class="grid">
-      <a class="card" href="/pages/dvd.html"><h3>Bouncing logo</h3><p>The classic DVD screensaver. Will it hit the corner?</p></a>
-      <a class="card" href="/pages/cursors.html"><h3>Cursor lab</h3><p>Fluid, ribbons, swarms and more to play with.</p></a>
-      <a class="card" href="/pages/themes.html"><h3>Theme switcher</h3><p>Liquid glass, embers, brutalist and terminal looks.</p></a>
+      <a class="card glass" href="/pages/dvd.html"><h3>Bouncing logo</h3><p>The classic DVD screensaver. Will it hit the corner?</p></a>
+      <a class="card glass" href="/pages/cursors.html"><h3>Cursor lab</h3><p>Fluid, ribbons, swarms and more to play with.</p></a>
+      <a class="card glass" href="/pages/themes.html"><h3>Theme switcher</h3><p>Liquid glass, embers, brutalist and terminal looks.</p></a>
     </div>
   </section>
 </main>
@@ -127,10 +142,11 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
 <footer id="contact">
   <h2>Reach out!</h2>
   <p>Share your ideas, bug reports, or anything else with me.</p>
-  <a class="mail" href="mailto:greg@samoilov.org">greg@samoilov.org</a>
+  <a class="mail glass" href="mailto:greg@samoilov.org"><span>greg@samoilov.org</span></a>
 </footer>
 
 <script>
+/* hero scroll intro (unchanged) */
 (function(){
   var el=document.getElementById('name'),hero=document.getElementById('hero'),hint=document.getElementById('hint'),
       hello=document.getElementById('hello'),stage=document.getElementById('stage');
@@ -169,6 +185,57 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
   addEventListener('scroll',measure,{passive:true});
   addEventListener('resize',measure);
   measure();render(cur);
+})();
+
+/* glass highlight follows the pointer inside any .glass box */
+document.addEventListener('pointermove',function(e){
+  var g=e.target.closest&&e.target.closest('.glass');
+  if(!g)return;
+  var r=g.getBoundingClientRect();
+  g.style.setProperty('--px',(e.clientX-r.left)+'px');
+  g.style.setProperty('--py',(e.clientY-r.top)+'px');
+});
+
+/* the web: a mesh whose strands get tugged toward your cursor and spring back */
+(function(){
+  var cv=document.getElementById('web'),c=cv.getContext('2d'),W=0,H=0,nodes=[],cols=0,rows=0,ST=46,raf=0;
+  var M={x:innerWidth/2,y:innerHeight/2},sm={x:M.x,y:M.y};
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function build(){
+    var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);
+    cols=Math.ceil(W/ST)+3;rows=Math.ceil(H/ST)+3;nodes=[];
+    for(var j=0;j<rows;j++)for(var i=0;i<cols;i++){var hx=(i-1)*ST,hy=(j-1)*ST;nodes.push({hx:hx,hy:hy,x:hx,y:hy,vx:0,vy:0})}
+    draw();
+  }
+  function draw(){
+    var i,j,p,q;c.clearRect(0,0,W,H);
+    for(i=0;i<nodes.length;i++){
+      p=nodes[i];
+      var k=Math.max(0,1-Math.hypot(sm.x-p.hx,sm.y-p.hy)/260);k=k*k*.62;
+      p.vx=(p.vx+(p.hx+(sm.x-p.hx)*k-p.x)*.14)*.74;p.vy=(p.vy+(p.hy+(sm.y-p.hy)*k-p.y)*.14)*.74;
+      p.x+=p.vx;p.y+=p.vy;
+    }
+    c.lineWidth=1;
+    for(j=0;j<rows;j++)for(i=0;i<cols;i++){
+      p=nodes[j*cols+i];
+      var e=Math.hypot(p.x-p.hx,p.y-p.hy);
+      c.strokeStyle='rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70)+')';
+      c.beginPath();
+      if(i<cols-1){q=nodes[j*cols+i+1];c.moveTo(p.x,p.y);c.lineTo(q.x,q.y)}
+      if(j<rows-1){q=nodes[(j+1)*cols+i];c.moveTo(p.x,p.y);c.lineTo(q.x,q.y)}
+      c.stroke();
+      if(e>6){c.fillStyle='rgba(255,200,120,'+Math.min(.9,e/50)+')';c.beginPath();c.arc(p.x,p.y,1.6,0,6.283);c.fill()}
+    }
+  }
+  function loop(){
+    sm.x+=(M.x-sm.x)*.12;sm.y+=(M.y-sm.y)*.12;
+    draw();raf=requestAnimationFrame(loop);
+  }
+  addEventListener('pointermove',function(e){M.x=e.clientX;M.y=e.clientY});
+  addEventListener('resize',build);
+  build();
+  if(!reduce)raf=requestAnimationFrame(loop);
 })();
 </script>
 </body>
