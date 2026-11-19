@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zen sand garden | Greg</title>
+<link rel="icon" type="image/png" href="/images/favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#fff4e8;--muted:#b9a08c;--yellow:#ffb703;--orange:#ff6b00;--red:#ff3d1f;
+  --g-bg:rgba(255,100,20,.07);--g-bd:rgba(255,150,60,.35);--g-sh:0 0 40px rgba(255,80,0,.14),inset 0 1px 0 rgba(255,220,180,.16);
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;color:var(--ink);font-family:var(--font);line-height:1.5;overflow-x:hidden;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(255,110,30,.16),transparent 70%),#0c0705}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
+.back{position:absolute;top:24px;left:clamp(16px,4vw,36px);color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+main{width:min(1100px,94vw);margin:0 auto;padding:64px 0 50px}
+h1{font-size:clamp(2.4rem,8vw,4.5rem);letter-spacing:-.04em;line-height:1}
+.sub{color:var(--muted);margin:8px 0 18px;max-width:56ch}
+.frame{position:relative;border:14px solid #4a2f1c;border-radius:16px;overflow:hidden;background:#222;
+  box-shadow:0 0 0 2px #2b1a0e,0 24px 70px rgba(0,0,0,.6)}
+.frame::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 50px rgba(0,0,0,.45)}
+canvas{display:block;width:100%;height:auto;aspect-ratio:5/3;touch-action:none;cursor:none}
+.controls{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;justify-content:center;margin-top:16px;padding:12px 18px;border-radius:22px;
+  background:var(--g-bg);border:1px solid var(--g-bd);box-shadow:var(--g-sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.btn{font:inherit;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--g-bd);border-radius:99px;padding:7px 16px;cursor:pointer;transition:background .2s}
+.btn:hover{background:rgba(255,160,60,.2)}
+.btn[aria-pressed="true"]{background:linear-gradient(100deg,var(--yellow),var(--orange) 60%,var(--red));color:#1a0a04;border-color:transparent;font-weight:500}
+.sep{width:1px;height:26px;background:var(--g-bd)}
+label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem}
+input[type=range]{accent-color:var(--orange);width:100px}
+.sw{display:flex;gap:8px}
+.sw button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.sw button[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.5)}
+#msg{min-height:1.6em;margin-top:12px;color:var(--muted);text-align:center;font-size:.95rem}
+</style>
+</head>
+<body>
+<a class="back" href="/">Back home</a>
+<main>
+  <h1>Zen garden</h1>
+  <p class="sub">Drag to rake the sand. Place a few stones, then press Ripples. There's no goal and nothing to win.</p>
+  <div class="frame"><canvas id="g" aria-label="A zen sand garden. Drag to rake the sand."></canvas></div>
+  <div class="controls glass">
+    <button class="btn" data-tool="rake" aria-pressed="true" type="button">Rake</button>
+    <button class="btn" data-tool="stone" aria-pressed="false" type="button">Stones</button>
+    <button class="btn" data-tool="smooth" aria-pressed="false" type="button">Smooth</button>
+    <span class="sep"></span>
+    <label>Spacing <input id="spc" type="range" min="10" max="26" value="16" aria-label="Tine spacing"></label>
+    <label>Tines <input id="tin" type="range" min="1" max="9" value="5" aria-label="Number of tines"></label>
+    <span class="sep"></span>
+    <div class="sw" id="sw" role="group" aria-label="Sand color"></div>
+    <span class="sep"></span>
+    <button class="btn" id="rip" type="button">Ripples</button>
+    <button class="btn" id="undo" type="button">Remove stone</button>
+    <button class="btn" id="clr" type="button">Smooth all</button>
+    <button class="btn" id="save" type="button">Save image</button>
+  </div>
+  <p id="msg"></p>
+</main>
+
+<script>
+(function(){
+  var cv=document.getElementById('g'),c=cv.getContext('2d');
+  var LW=1000,LH=600,HS=2,HW=LW/HS,HH=LH/HS;                 // garden size, and the (lower-res) sand heightmap
+  var dpr=Math.min(2,devicePixelRatio||1);cv.width=LW*dpr;cv.height=LH*dpr;c.setTransform(dpr,0,0,dpr,0,0);
+
+  /* The sand is a heightmap: raking pushes it down into grooves with ridges beside them.
+     Each pixel is then lit from the upper left, so the grooves look carved. */
+  var Hh=new Float32Array(HW*HH),NZ=new Float32Array(HW*HH),i;
+  for(i=0;i<NZ.length;i++)NZ[i]=Math.random()*2-1;
+  var sand=document.createElement('canvas');sand.width=HW;sand.height=HH;
+  var sctx=sand.getContext('2d'),img=sctx.createImageData(HW,HH),D=img.data;
+
+  var PALS=[[228,208,164],[236,168,112],[150,166,190]];
+  var base=PALS[0],tool='rake',spacing=16,tines=5,stones=[],down=false,last=null,dragStone=null,dragOff={x:0,y:0};
+  var dirx=1,diry=0,mouse={x:0,y:0,inside:false},anim=[],clearing=false;
+  var dirty={x0:0,y0:0,x1:HW-1,y1:HH-1,on:true};
+
+  function mark(x0,y0,x1,y1){
+    x0=Math.max(0,x0|0);y0=Math.max(0,y0|0);x1=Math.min(HW-1,x1|0);y1=Math.min(HH-1,y1|0);
+    if(!dirty.on){dirty.x0=x0;dirty.y0=y0;dirty.x1=x1;dirty.y1=y1;dirty.on=true;return}
+    dirty.x0=Math.min(dirty.x0,x0);dirty.y0=Math.min(dirty.y0,y0);dirty.x1=Math.max(dirty.x1,x1);dirty.y1=Math.max(dirty.y1,y1);
+  }
+  function clamp(v){return v<0?0:v>255?255:v}
+  function shade(x0,y0,x1,y1){
+    var K=1.6,x,y;
+    for(y=y0;y<=y1;y++)for(x=x0;x<=x1;x++){
+      var k=y*HW+x,xl=x>0?k-1:k,xr=x<HW-1?k+1:k,yu=y>0?k-HW:k,yd=y<HH-1?k+HW:k,
+          hx=(Hh[xr]-Hh[xl])*.5*K,hy=(Hh[yd]-Hh[yu])*.5*K,
+          lit=(.6*hx+.6*hy+.55)/Math.sqrt(hx*hx+hy*hy+1),                 // light comes from the upper left
+          f=1+(lit-.55)*1.9+Hh[k]*.07,n=NZ[k]*6,o=k*4;
+      D[o]=clamp(base[0]*f+n);D[o+1]=clamp(base[1]*f+n);D[o+2]=clamp(base[2]*f+n);D[o+3]=255;
+    }
+  }
+
+  /* one tine pressing into the sand at (px,py) */
+  function stamp(px,py){
+    var sp=spacing/HS,b=Math.ceil(sp*.62)+1,cx=px/HS,cy=py/HS,
+        x0=Math.max(0,Math.floor(cx-b)),x1=Math.min(HW-1,Math.ceil(cx+b)),y0=Math.max(0,Math.floor(cy-b)),y1=Math.min(HH-1,Math.ceil(cy+b));
+    for(var y=y0;y<=y1;y++)for(var x=x0;x<=x1;x++){
+      var u=Math.hypot(x-cx,y-cy)/sp;
+      if(u>.62)continue;
+      var tgt=-Math.exp(-u*u/.04)+.42*Math.exp(-(u-.5)*(u-.5)/.02),w=u<.55?.65:.65*(1-(u-.55)/.07),k=y*HW+x;
+      Hh[k]+=(tgt-Hh[k])*w;
+    }
+    mark(x0-1,y0-1,x1+1,y1+1);
+  }
+  function smoothAt(px,py){
+    var r=34/HS,cx=px/HS,cy=py/HS,x0=Math.max(0,Math.floor(cx-r)),x1=Math.min(HW-1,Math.ceil(cx+r)),y0=Math.max(0,Math.floor(cy-r)),y1=Math.min(HH-1,Math.ceil(cy+r));
+    for(var y=y0;y<=y1;y++)for(var x=x0;x<=x1;x++){
+      var d=Math.hypot(x-cx,y-cy);
+      if(d<r)Hh[y*HW+x]*=1-.3*(1-d/r);
+    }
+    mark(x0-1,y0-1,x1+1,y1+1);
+  }
+
+  /* the rake can't go through stones: each tine slides around the edge, which is what bends the lines */
+  function push(p){
+    stones.forEach(function(s){
+      var dx=p.x-s.x,dy=p.y-s.y,d=Math.hypot(dx,dy),m=s.r+6;
+      if(d<m){if(d<.001){p.x=s.x+m}else{p.x=s.x+dx/d*m;p.y=s.y+dy/d*m}}
+    });
+  }
+  function rakeTo(x,y){
+    if(!last){last={x:x,y:y};return}
+    var dx=x-last.x,dy=y-last.y,dist=Math.hypot(dx,dy);
+    if(dist<2)return;
+    dirx=dirx*.7+dx/dist*.3;diry=diry*.7+dy/dist*.3;
+    var dl=Math.hypot(dirx,diry)||1;dirx/=dl;diry/=dl;
+    var steps=Math.ceil(dist/2),px=-diry,py=dirx,s,k;
+    for(s=1;s<=steps;s++){
+      var t=s/steps,cx=last.x+dx*t,cy=last.y+dy*t;
+      for(k=0;k<tines;k++){
+        var off=(k-(tines-1)/2)*spacing,p={x:cx+px*off,y:cy+py*off};
+        push(p);
+        if(p.x>=0&&p.x<LW&&p.y>=0&&p.y<LH)stamp(p.x,p.y);
+      }
+    }
+    last={x:x,y:y};
+  }
+  function smoothTo(x,y){
+    if(!last){last={x:x,y:y};smoothAt(x,y);return}
+    var dx=x-last.x,dy=y-last.y,steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/8));
+    for(var s=1;s<=steps;s++)smoothAt(last.x+dx*s/steps,last.y+dy*s/steps);
+    last={x:x,y:y};
+  }
+
+  /* ---------------- stones ---------------- */
+  function mkStone(x,y,r){
+    r=r||22+Math.random()*26;
+    var pts=[],dots=[],j;
+    for(j=0;j<10;j++)pts.push(.85+Math.random()*.3);
+    for(j=0;j<16;j++)dots.push({a:Math.random()*6.283,d:Math.random()*.8,r:.6+Math.random()*1.6,l:Math.random()<.5});
+    return{x:x,y:y,r:r,pts:pts,dots:dots,sx:1+Math.random()*.3,rot:Math.random()*6.283};
+  }
+  function stonePath(s){
+    var n=s.pts.length,P=[],j,cr=Math.cos(s.rot),sr=Math.sin(s.rot);
+    for(j=0;j<n;j++){
+      var a=j/n*6.283,lx=Math.cos(a)*s.r*s.pts[j]*s.sx,ly=Math.sin(a)*s.r*s.pts[j]*.82;
+      P.push({x:s.x+lx*cr-ly*sr,y:s.y+lx*sr+ly*cr});
+    }
+    c.beginPath();
+    c.moveTo((P[n-1].x+P[0].x)/2,(P[n-1].y+P[0].y)/2);
+    for(j=0;j<n;j++){var q=P[(j+1)%n];c.quadraticCurveTo(P[j].x,P[j].y,(P[j].x+q.x)/2,(P[j].y+q.y)/2)}
+    c.closePath();
+  }
+  function drawStone(s){
+    c.save();
+    c.shadowColor='rgba(0,0,0,.4)';c.shadowBlur=16;c.shadowOffsetX=s.r*.2;c.shadowOffsetY=s.r*.26;
+    var g=c.createRadialGradient(s.x-s.r*.35,s.y-s.r*.4,s.r*.1,s.x,s.y,s.r*1.15);
+    g.addColorStop(0,'#bdbbb2');g.addColorStop(.55,'#78756f');g.addColorStop(1,'#3b3936');
+    c.fillStyle=g;stonePath(s);c.fill();
+    c.shadowColor='transparent';
+    stonePath(s);c.clip();
+    s.dots.forEach(function(d){
+      c.fillStyle=d.l?'rgba(255,255,255,.18)':'rgba(0,0,0,.22)';
+      c.beginPath();c.arc(s.x+Math.cos(d.a)*s.r*d.d,s.y+Math.sin(d.a)*s.r*d.d*.8,d.r,0,6.283);c.fill();
+    });
+    c.restore();
+  }
+  function stoneAt(x,y){
+    for(var j=stones.length-1;j>=0;j--)if(Math.hypot(stones[j].x-x,stones[j].y-y)<stones[j].r)return stones[j];
+    return null;
+  }
+
+  /* ripples: concentric rings drawn outward around every stone */
+  function ripples(){
+    if(!stones.length){say('Place a stone first, then press Ripples.');return}
+    stones.forEach(function(s){for(var k=1;k<=5;k++)anim.push({s:s,R:s.r+8+k*spacing*1.05,a:0})});
+  }
+  function stepAnim(){
+    anim=anim.filter(function(r){
+      var moved=0;
+      while(moved<9&&r.a<6.283){
+        r.a+=3/r.R;moved+=3;
+        var p={x:r.s.x+Math.cos(r.a)*r.R,y:r.s.y+Math.sin(r.a)*r.R},blocked=false;
+        for(var j=0;j<stones.length;j++){
+          if(stones[j]!==r.s&&Math.hypot(p.x-stones[j].x,p.y-stones[j].y)<stones[j].r+6){blocked=true;break}
+        }
+        if(!blocked&&p.x>=0&&p.x<LW&&p.y>=0&&p.y<LH)stamp(p.x,p.y);
+      }
+      return r.a<6.283;
+    });
+  }
+
+  /* ---------------- drawing ---------------- */
+  function frame(){
+    if(clearing){
+      var mx=0,k;
+      for(k=0;k<Hh.length;k++){Hh[k]*=.86;if(Math.abs(Hh[k])>mx)mx=Math.abs(Hh[k])}
+      mark(0,0,HW-1,HH-1);
+      if(mx<.01){Hh.fill(0);clearing=false}
+    }
+    if(anim.length)stepAnim();
+    if(dirty.on){
+      shade(dirty.x0,dirty.y0,dirty.x1,dirty.y1);
+      sctx.putImageData(img,0,0,dirty.x0,dirty.y0,dirty.x1-dirty.x0+1,dirty.y1-dirty.y0+1);
+      dirty.on=false;
+    }
+    c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+    c.drawImage(sand,0,0,LW,LH);
+    stones.forEach(drawStone);
+    if(mouse.inside)drawCursor();
+    requestAnimationFrame(frame);
+  }
+  function drawCursor(){
+    c.save();c.lineWidth=1.5;
+    if(tool==='rake'){
+      var px=-diry,py=dirx,half=(tines-1)/2*spacing;
+      c.strokeStyle='rgba(60,40,20,.55)';c.beginPath();
+      c.moveTo(mouse.x-px*(half+8),mouse.y-py*(half+8));c.lineTo(mouse.x+px*(half+8),mouse.y+py*(half+8));c.stroke();
+      c.fillStyle='rgba(60,40,20,.8)';
+      for(var k=0;k<tines;k++){var off=(k-(tines-1)/2)*spacing;c.beginPath();c.arc(mouse.x+px*off,mouse.y+py*off,3,0,6.283);c.fill()}
+    }else if(tool==='smooth'){
+      c.strokeStyle='rgba(60,40,20,.55)';c.setLineDash([5,5]);c.beginPath();c.arc(mouse.x,mouse.y,34,0,6.283);c.stroke();
+    }else{
+      c.strokeStyle='rgba(255,255,255,.55)';c.setLineDash([4,4]);c.beginPath();c.arc(mouse.x,mouse.y,28,0,6.283);c.stroke();
+    }
+    c.restore();
+  }
+
+  /* ---------------- controls ---------------- */
+  var msgEl=document.getElementById('msg'),msgT=0;
+  function say(t){msgEl.textContent=t;clearTimeout(msgT);msgT=setTimeout(function(){msgEl.textContent=''},3500)}
+  [].forEach.call(document.querySelectorAll('[data-tool]'),function(b){
+    b.addEventListener('click',function(){
+      tool=b.getAttribute('data-tool');
+      [].forEach.call(document.querySelectorAll('[data-tool]'),function(o){o.setAttribute('aria-pressed',o===b)});
+      if(tool==='stone')say('Click to place a stone. Drag a stone to move it.');
+    });
+  });
+  document.getElementById('spc').addEventListener('input',function(e){spacing=+e.target.value});
+  document.getElementById('tin').addEventListener('input',function(e){tines=+e.target.value});
+  var swEl=document.getElementById('sw');
+  PALS.forEach(function(p,k){
+    var b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Sand color '+(k+1));b.setAttribute('aria-pressed',k===0);
+    b.style.background='rgb('+p.join(',')+')';
+    b.addEventListener('click',function(){base=p;mark(0,0,HW-1,HH-1);[].forEach.call(swEl.children,function(o){o.setAttribute('aria-pressed',o===b)})});
+    swEl.appendChild(b);
+  });
+  document.getElementById('rip').addEventListener('click',ripples);
+  document.getElementById('undo').addEventListener('click',function(){if(stones.length)stones.pop();else say('No stones to remove.')});
+  document.getElementById('clr').addEventListener('click',function(){clearing=true;anim=[]});
+  document.getElementById('save').addEventListener('click',function(){
+    cv.toBlob(function(b){
+      var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='zen-garden.png';a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+    });
+  });
+
+  function pos(e){var r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*LW,y:(e.clientY-r.top)/r.height*LH}}
+  cv.addEventListener('pointerdown',function(e){
+    var p=pos(e);down=true;last=null;mouse.x=p.x;mouse.y=p.y;mouse.inside=true;
+    try{cv.setPointerCapture(e.pointerId)}catch(err){}
+    if(tool==='stone'){
+      var s=stoneAt(p.x,p.y);
+      if(s){dragStone=s;dragOff={x:s.x-p.x,y:s.y-p.y}}
+      else if(stones.length<14){var ns=mkStone(p.x,p.y);stones.push(ns);dragStone=ns;dragOff={x:0,y:0}}
+      else say('That is plenty of stones.');
+    }else if(tool==='smooth')smoothTo(p.x,p.y);
+    else last={x:p.x,y:p.y};
+  });
+  cv.addEventListener('pointermove',function(e){
+    var p=pos(e);mouse.x=p.x;mouse.y=p.y;mouse.inside=true;
+    if(!down)return;
+    if(tool==='rake')rakeTo(p.x,p.y);
+    else if(tool==='smooth')smoothTo(p.x,p.y);
+    else if(dragStone){dragStone.x=p.x+dragOff.x;dragStone.y=p.y+dragOff.y}
+  });
+  function up(){down=false;last=null;dragStone=null}
+  cv.addEventListener('pointerup',up);
+  cv.addEventListener('pointercancel',up);
+  cv.addEventListener('pointerleave',function(){mouse.inside=false});
+
+  /* start with a few stones and a first set of ripples, so it already looks like a garden */
+  stones.push(mkStone(310,300,46),mkStone(655,235,34),mkStone(735,420,24));
+  requestAnimationFrame(frame);
+  setTimeout(ripples,500);
+  say('Drag to rake. Try the Stones tool to place your own.');
+})();
+</script>
+</body>
+</html>
