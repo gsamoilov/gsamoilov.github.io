@@ -121,6 +121,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
   20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
+#snd{background:none;border:1px solid rgba(255,255,255,.18);color:#fff4e8;border-radius:99px;padding:6px 16px;font:inherit;cursor:pointer;margin-right:6px}
+#snd:hover{background:rgba(255,255,255,.08)}
 </style>
 </head>
 
@@ -129,7 +131,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 <div class="bar">
   <a href="/">Back home</a>
   <span id="score">Corner hits: 0</span>
-  <button id="pause" type="button">Pause</button>
+  <div><button id="snd" type="button">Sound: off</button> <button id="pause" type="button">Pause</button></div>
 </div>
 
 <div id="world">
@@ -155,6 +157,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
       btn=document.getElementById('pause');
 
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+     // ---- sound: synthesized with Web Audio ----
+  var snd=document.getElementById('snd'),actx=null,soundOn=false;
+  function tone(freq,dur,type,vol,slideTo){
+    if(!soundOn||!actx)return;
+    var t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';o.frequency.setValueAtTime(freq,t);
+    if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+    g.gain.setValueAtTime(vol||.15,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+dur);
+  }
+  function wallSound(){tone(190+Math.random()*60,.13,'triangle',.2,70)}
+  function cornerSound(){[523,659,784,1047].forEach(function(f,i){setTimeout(function(){tone(f,.3,'square',.1)},i*90)})}
+  snd.addEventListener('click',function(){
+    soundOn=!soundOn;
+    if(soundOn&&!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx&&actx.state==='suspended')actx.resume();
+    snd.textContent='Sound: '+(soundOn?'on':'off');
+    if(soundOn)wallSound();
+  });
 
   var x=0,y=0,
       vx=170,vy=140,
@@ -205,6 +227,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
   // WALL GLOW
   function wallImpact(horizontal){
+     wallSound();
     if(reduce)return;
     var d=document.createElement('div'),side;
     if(horizontal){
@@ -225,6 +248,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0c0705;color:#fff4e
 
   // CORNER HIT
   function cornerHit(){
+     cornerSound();
     hits++;
     score.textContent='Corner hits: '+hits;
 
