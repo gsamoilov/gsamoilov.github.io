@@ -370,12 +370,12 @@ document.addEventListener('pointermove',function(e){
     });
   })();
 
-  function gradient(){      // each letter gets the gradient color for its spot in the word
-    var stops=[[.15,[255,244,232]],[.5,[255,183,3]],[.75,[255,107,0]],[1,[255,61,31]]],hr=helloEl.getBoundingClientRect();
+    function gradient(){      // the gradient runs across the WORD (first letter to the comma)
+    var stops=document.body.classList.contains('neon')?[[0,[0,229,255]],[.55,[138,43,255]],[1,[255,43,214]]]:[[0,[255,200,60]],[.5,[255,107,0]],[1,[255,61,31]]],
+        r0=L[0].el.getBoundingClientRect(),r1=L[L.length-1].el.getBoundingClientRect(),span=(r1.right-r0.left)||1;
     L.forEach(function(o){
-      var r=o.el.getBoundingClientRect(),
-          t=Math.max(.15,Math.min(1,(r.left+r.width/2-hr.left)/hr.width)),i=1;
-      while(i<3&&t>stops[i][0])i++;
+      var r=o.el.getBoundingClientRect(),t=Math.max(0,Math.min(1,(r.left+r.width/2-r0.left)/span)),i=1;
+      while(i<2&&t>stops[i][0])i++;
       var a=stops[i-1],b=stops[i],u=(t-a[0])/(b[0]-a[0]);
       o.el.style.color='rgb('+[0,1,2].map(function(k){return Math.round(a[1][k]+(b[1][k]-a[1][k])*u)}).join(',')+')';
     });
