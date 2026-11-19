@@ -115,41 +115,6 @@ footer{text-align:center;padding:60px 20px 80px;color:var(--muted)}
   .hero{height:auto}.stage{position:static;height:auto;padding-top:20vh;padding-bottom:10vh}
   .name span{opacity:1!important;transform:none!important}.hint{display:none}
 }
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.brand img{height:32px;width:32px;display:block;filter:drop-shadow(0 0 10px rgba(255,107,0,.45))}
-/* ===== secret NEON theme ===== */
-body.neon{--bg:#05010f;--ink:#eafcff;--muted:#8fb4c9;--red:#ff2bd6;--orange:#8a2bff;--yellow:#00e5ff;
-  --g-bg:rgba(0,229,255,.05);--g-bd:rgba(0,229,255,.32);--g-sh:0 0 40px rgba(0,229,255,.14),inset 0 1px 0 rgba(200,255,255,.16);--spec:rgba(255,43,214,.28)}
-body.neon nav{background:rgba(0,229,255,.05);box-shadow:0 8px 30px rgba(0,229,255,.1)}
-body.neon .card:hover{border-color:rgba(0,229,255,.85);box-shadow:0 0 50px rgba(0,229,255,.32),inset 0 1px 0 rgba(220,255,255,.25)}
-body.neon .mail{background:linear-gradient(100deg,rgba(0,229,255,.3),rgba(138,43,255,.28) 55%,rgba(255,43,214,.3));border-color:rgba(0,229,255,.6)}
-body.neon .mail:hover{box-shadow:0 0 36px rgba(0,229,255,.45),inset 0 1px 0 rgba(220,255,255,.3)}
-body.neon .ltr,body.neon .fly,body.neon h2,body.neon .name{text-shadow:2px 0 rgba(255,43,214,.6),-2px 0 rgba(0,229,255,.6),0 0 22px currentColor}
-body.neon h2{animation:glitch 5s infinite}
-@keyframes glitch{0%,91%,100%{transform:none}92%{transform:translate(-4px,0) skewX(8deg)}94%{transform:translate(4px,0) skewX(-6deg)}96%{transform:translate(-2px,0)}}
-body.neon::after{content:"";position:fixed;inset:0;z-index:55;pointer-events:none;background:repeating-linear-gradient(transparent 0 3px,rgba(0,0,0,.16) 3px 4px)}
-@property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
-body.neon .glass::before{content:"";position:absolute;inset:0;padding:1px;border-radius:inherit;pointer-events:none;
-  background:conic-gradient(from var(--ang),#00e5ff,#8a2bff,#ff2bd6,#00e5ff);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:spinb 4s linear infinite}
-@keyframes spinb{to{--ang:360deg}}
-@media (prefers-reduced-motion:reduce){body.neon h2,body.neon .glass::before{animation:none}}
-/* unlock screen */
-#unlock{position:fixed;left:0;top:0;width:100%;height:100vh;z-index:100;overflow:hidden;background:#05010f;opacity:0;
-  transition:opacity .25s,height .8s cubic-bezier(.7,0,.2,1);border-bottom:3px solid #00e5ff;box-shadow:0 8px 40px #00e5ff}
-#unlock.show{opacity:1}
-#unlock.wipe{height:0;border-bottom-color:#ff2bd6;box-shadow:0 8px 60px #ff2bd6,0 0 120px #00e5ff}
-.u-in{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;
-  font-family:"Courier New",ui-monospace,monospace;color:#00e5ff;background:repeating-linear-gradient(transparent 0 3px,rgba(0,229,255,.05) 3px 4px)}
-.u-glitch{position:relative;font-size:clamp(2rem,9vw,6rem);font-weight:700;letter-spacing:.06em;color:#eafcff;animation:ug .35s steps(2) infinite}
-.u-glitch::before,.u-glitch::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%}
-.u-glitch::before{color:#ff2bd6;transform:translate(-4px,0);mix-blend-mode:screen;clip-path:inset(0 0 55% 0)}
-.u-glitch::after{color:#00e5ff;transform:translate(4px,0);mix-blend-mode:screen;clip-path:inset(50% 0 0 0)}
-@keyframes ug{0%{transform:translate(0)}50%{transform:translate(2px,-1px) skewX(3deg)}100%{transform:translate(-2px,1px)}}
-.u-log{font:inherit;min-height:5.5em;text-align:left;white-space:pre;font-size:clamp(.9rem,2.4vw,1.2rem);text-shadow:0 0 10px #00e5ff}
-.u-bar{width:min(360px,70vw);height:6px;border:1px solid #00e5ff;border-radius:99px;overflow:hidden}
-.u-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#00e5ff,#ff2bd6);transition:width 2.2s cubic-bezier(.3,.7,.2,1)}
 </style>
 </head>
 <body>
@@ -160,7 +125,7 @@ body.neon .glass::before{content:"";position:absolute;inset:0;padding:1px;border
 <div id="toast" aria-hidden="true">⚡ KONAMI ⚡</div>
 
 <nav>
-  <a class="brand" href="/"><img src="/images/logo.png" alt=""><b>greg.</b></a>
+  <b>greg.</b>
   <ul>
     <li><a href="#about">About</a></li>
     <li><a href="#work">Work</a></li>
@@ -354,7 +319,7 @@ document.addEventListener('pointermove',function(e){
     for(j=0;j<rows;j++)for(i=0;i<cols;i++){
       p=nodes[j*cols+i];
       var e=Math.hypot(p.x-p.hx,p.y-p.hy);
-      wc.strokeStyle=stm?'rgba(0,229,255,'+Math.min(.85,.12+e/70+boost)+')':'rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70+boost)+')';
+      wc.strokeStyle=stm?'rgba(140,190,255,'+Math.min(.85,.12+e/70+boost)+')':'rgba(255,'+Math.round(170-Math.min(70,e))+',90,'+Math.min(.85,.1+e/70+boost)+')';
       wc.beginPath();
       if(i<cols-1){q=nodes[j*cols+i+1];wc.moveTo(p.x,p.y);wc.lineTo(q.x,q.y);if(pulses.length)lit(p,q)}
       if(j<rows-1){q=nodes[(j+1)*cols+i];wc.moveTo(p.x,p.y);wc.lineTo(q.x,q.y);if(pulses.length)lit(p,q)}
@@ -370,8 +335,8 @@ document.addEventListener('pointermove',function(e){
       });
       wc.strokeStyle=gs;wc.lineWidth=gw;wc.stroke();wc.strokeStyle=cs;wc.lineWidth=cw;wc.stroke();
     }
-    arcs(weak,stm?'rgba(255,43,214,.25)':'rgba(255,150,40,.22)',5,stm?'rgba(200,230,255,.6)':'rgba(255,215,140,.6)',1.2);
-    arcs(strong,stm?'rgba(255,43,214,.4)':'rgba(255,150,40,.35)',9,stm?'rgba(240,250,255,1)':'rgba(255,248,200,1)',2.4);
+    arcs(weak,stm?'rgba(120,180,255,.22)':'rgba(255,150,40,.22)',5,stm?'rgba(200,230,255,.6)':'rgba(255,215,140,.6)',1.2);
+    arcs(strong,stm?'rgba(120,180,255,.35)':'rgba(255,150,40,.35)',9,stm?'rgba(240,250,255,1)':'rgba(255,248,200,1)',2.4);
   }
 
   function drawFx(now,dt){
@@ -403,12 +368,12 @@ document.addEventListener('pointermove',function(e){
     });
   })();
 
-    function gradient(){      // the gradient runs across the WORD (first letter to the comma)
-    var stops=document.body.classList.contains('neon')?[[0,[0,229,255]],[.55,[138,43,255]],[1,[255,43,214]]]:[[0,[255,200,60]],[.5,[255,107,0]],[1,[255,61,31]]],
-        r0=L[0].el.getBoundingClientRect(),r1=L[L.length-1].el.getBoundingClientRect(),span=(r1.right-r0.left)||1;
+  function gradient(){      // each letter gets the gradient color for its spot in the word
+    var stops=[[.15,[255,244,232]],[.5,[255,183,3]],[.75,[255,107,0]],[1,[255,61,31]]],hr=helloEl.getBoundingClientRect();
     L.forEach(function(o){
-      var r=o.el.getBoundingClientRect(),t=Math.max(0,Math.min(1,(r.left+r.width/2-r0.left)/span)),i=1;
-      while(i<2&&t>stops[i][0])i++;
+      var r=o.el.getBoundingClientRect(),
+          t=Math.max(.15,Math.min(1,(r.left+r.width/2-hr.left)/hr.width)),i=1;
+      while(i<3&&t>stops[i][0])i++;
       var a=stops[i-1],b=stops[i],u=(t-a[0])/(b[0]-a[0]);
       o.el.style.color='rgb('+[0,1,2].map(function(k){return Math.round(a[1][k]+(b[1][k]-a[1][k])*u)}).join(',')+')';
     });
@@ -479,42 +444,30 @@ document.addEventListener('pointermove',function(e){
     });
   }
 
-    /* ---- konami code: unlocks (and toggles) the secret NEON theme ---- */
-  var KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'],ki=0,neon=false,busy=false;
+  /* ---- konami code: up up down down left right left right b a ---- */
+  var KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'],ki=0;
   addEventListener('keydown',function(e){
     var k=e.key.length===1?e.key.toLowerCase():e.key;
-    if(k===KONAMI[ki]){ki++;if(ki===KONAMI.length){ki=0;unlockSeq()}}
+    if(k===KONAMI[ki]){ki++;if(ki===KONAMI.length){ki=0;startStorm()}}
     else ki=(k===KONAMI[0])?1:0;
   });
-  function setNeon(on){
-    neon=on;storm=on?1:0;                       // 'storm' now just means "use the neon web colors"
-    document.body.classList.toggle('neon',on);
-    try{localStorage.setItem('greg-neon',on?'1':'0')}catch(err){}
-    gradient();
+  function startStorm(){
+    if(reduce||storm>0)return;
+    storm=7000;stormNext=0;flash=1;document.body.classList.add('storm');
+    toast.classList.remove('go');void toast.offsetWidth;toast.classList.add('go');
+    L.forEach(kick);
   }
-  function unlockSeq(){
-    if(busy)return;
-    if(reduce){setNeon(!neon);return}
-    busy=true;
-    var on=!neon,txt=on?'ACCESS GRANTED':'RESTORING',ov=document.createElement('div');
-    ov.id='unlock';
-    ov.innerHTML='<div class="u-in"><div class="u-glitch" data-t="'+txt+'">'+txt+'</div><pre class="u-log"></pre><div class="u-bar"><i></i></div></div>';
-    document.body.appendChild(ov);
-    var log=ov.querySelector('.u-log'),
-        lines=on?['> konami sequence verified','> decrypting theme: NEON','> injecting palette','> done.']:['> reverting palette','> restoring ember','> done.'];
-    requestAnimationFrame(function(){ov.classList.add('show');ov.querySelector('.u-bar i').style.width='100%'});
-    lines.forEach(function(s,i){setTimeout(function(){log.textContent+=s+'\n'},350+i*380)});
-    setTimeout(function(){
-      setNeon(on);ov.classList.add('wipe');
-      setTimeout(function(){
-        ov.remove();busy=false;
-        zap(W/2,H/2);L.forEach(kick);
-        toast.textContent=on?'🔓 THEME UNLOCKED: NEON':'🔥 EMBER RESTORED';
-        toast.classList.remove('go');void toast.offsetWidth;toast.classList.add('go');
-      },850);
-    },350+lines.length*380+300);
+  function strike(){
+    var x=Math.random()*W,y=H*(.25+Math.random()*.6);
+    bolt(x+(Math.random()-.5)*160,0,x,y,520);zap(x,y);flash=1;
   }
-  function stormTick(){}                        // the old storm is gone; the loop still calls this
+  function stormTick(dt){
+    if(storm<=0)return;
+    storm-=dt;stormNext-=dt;
+    if(stormNext<=0){stormNext=220+Math.random()*320;strike()}
+    if(storm<=0)document.body.classList.remove('storm');
+  }
+
   /* ---- input ---- */
   addEventListener('pointermove',function(e){
     M.x=e.clientX;M.y=e.clientY;M.inside=true;
@@ -530,7 +483,7 @@ document.addEventListener('pointermove',function(e){
   addEventListener('pointercancel',release);
   document.addEventListener('mouseleave',function(){M.inside=false});
   addEventListener('pointerdown',function(e){shock(e.clientX,e.clientY)});   // click = shockwave only
-  addEventListener('resize',function(){()});
+  addEventListener('resize',function(){build();gradient()});
 
   var last=performance.now();
   function loop(now){
@@ -542,7 +495,6 @@ document.addEventListener('pointermove',function(e){
     requestAnimationFrame(loop);
   }
   build();gradient();
-  try{if(localStorage.getItem('greg-neon')==='1')setNeon(true)}catch(err){}
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(gradient);
   requestAnimationFrame(loop);
 })();
