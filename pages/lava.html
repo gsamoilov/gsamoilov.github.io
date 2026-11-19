@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lava lamp | Greg</title>
+<link rel="icon" type="image/png" href="/images/favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#fff4e8;--muted:#b9a08c;--yellow:#ffb703;--orange:#ff6b00;--red:#ff3d1f;
+  --g-bg:rgba(255,100,20,.07);--g-bd:rgba(255,150,60,.35);--g-sh:0 0 40px rgba(255,80,0,.14),inset 0 1px 0 rgba(255,220,180,.16);
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;color:var(--ink);font-family:var(--font);line-height:1.5;overflow-x:hidden;
+  background:radial-gradient(ellipse 55% 55% at 50% 52%,rgba(var(--g,255,110,30),calc(var(--p,1)*.38)),transparent 72%),#0c0705}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
+.back{position:absolute;top:24px;left:clamp(16px,4vw,36px);color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+main{display:flex;flex-direction:column;align-items:center;padding:64px 16px 40px;text-align:center}
+h1{font-size:clamp(2.4rem,8vw,4.5rem);letter-spacing:-.04em;line-height:1}
+.sub{color:var(--muted);margin:8px 0 14px;max-width:46ch}
+#lamp{display:block;height:min(72vh,640px);width:auto;aspect-ratio:300/640;touch-action:manipulation}
+.controls{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:center;justify-content:center;margin-top:10px;padding:12px 20px;border-radius:22px;
+  background:var(--g-bg);border:1px solid var(--g-bd);box-shadow:var(--g-sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.btn{font:inherit;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--g-bd);border-radius:99px;padding:7px 18px;cursor:pointer;transition:background .2s}
+.btn:hover{background:rgba(255,160,60,.2)}
+.btn[aria-pressed="true"]{background:linear-gradient(100deg,var(--yellow),var(--orange) 60%,var(--red));color:#1a0a04;border-color:transparent;font-weight:500}
+label{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.92rem}
+input[type=range]{accent-color:var(--orange);width:130px}
+.sw{display:flex;gap:8px}
+.sw button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.sw button[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.5)}
+#count{color:var(--muted);font-variant-numeric:tabular-nums;min-width:90px;text-align:right}
+</style>
+</head>
+<body>
+<a class="back" href="/">Back home</a>
+<main>
+  <h1>Lava lamp</h1>
+  <p class="sub">Click a blob to pop it. Switch the lamp off and watch the wax sink, then switch it on and wait for it to rise.</p>
+  <canvas id="lamp" aria-label="A lava lamp. Click the wax blobs to pop them."></canvas>
+  <div class="controls">
+    <button class="btn" id="power" type="button" aria-pressed="true">Power: on</button>
+    <label>Heat <input id="heat" type="range" min="40" max="160" value="100" aria-label="Heat"></label>
+    <div class="sw" id="sw" role="group" aria-label="Colors"></div>
+    <span id="count">Popped: 0</span>
+  </div>
+</main>
+
+<script>
+(function(){
+  var cv=document.getElementById('lamp'),c=cv.getContext('2d');
+  var LW=300,LH=640,OX=150,OY=95,H=415;             // lamp canvas size, glass origin, glass height
+  var dpr=Math.min(2,devicePixelRatio||1);cv.width=LW*dpr;cv.height=LH*dpr;c.setTransform(dpr,0,0,dpr,0,0);
+
+  /* wax is rendered as a low-res "metaball" field, then smoothed up. Cheap and it looks liquid. */
+  var GW=115,GH=208,SC=2,F=new Float32Array(GW*GH),wcv=document.createElement('canvas');
+  wcv.width=GW;wcv.height=GH;
+  var wctx=wcv.getContext('2d'),img=wctx.createImageData(GW,GH),D=img.data;
+
+  var PAL=[
+    {liq:[[255,176,60],[255,112,28]],edge:[190,22,12],core:[255,96,46],glow:[255,110,30]},   // classic
+    {liq:[[120,40,150],[205,50,140]],edge:[255,60,160],core:[255,175,225],glow:[255,70,190]}, // pink
+    {liq:[[15,110,60],[10,175,95]],edge:[150,230,40],core:[240,255,160],glow:[90,255,110]},   // lime
+    {liq:[[10,60,140],[10,125,205]],edge:[0,200,235],core:[190,250,255],glow:[40,200,255]},   // ocean
+    {liq:[[45,22,115],[95,32,175]],edge:[230,90,220],core:[255,200,250],glow:[170,80,255]}    // violet
+  ];
+  var pal=PAL[0],blobs=[],pool=[],parts=[],rings=[];
+  var t=0,power=1,on=true,heat=1,pending=0,spawnT=0,popped=0;
+
+  function hw(y){y=Math.max(0,Math.min(H,y));return y<300?40+68*Math.sin(y/300*Math.PI/2):108-24*Math.pow((y-300)/115,2)}
+  function mk(r,x,y,T){return{r:r,x:x,y:y,vx:0,vy:0,T:T,ph:Math.random()*6.283,dead:false}}
+  function init(){
+    blobs=[];
+    for(var i=0;i<6;i++)blobs.push(mk(17+Math.random()*13,(Math.random()-.5)*70,60+i*52+Math.random()*20,Math.random()));
+    pool=[[-70,34],[-35,38],[0,42],[35,38],[70,34]].map(function(p,i){return{x:p[0],y:H-16,r:p[1],i:i}});
+  }
+
+  /* ---------------- physics: heat makes wax rise, cooling makes it sink ---------------- */
+  function step(dt){
+    t+=dt;
+    power+=((on?1:0)-power)*Math.min(1,dt*.5);
+    var A=62*heat,i,j,b,a;
+    pool.forEach(function(p){p.y=H-16+Math.sin(t*.6+p.i)*2});
+    for(i=0;i<blobs.length;i++){
+      b=blobs[i];
+      var depth=b.y/H,k=Math.min(2.2,22/Math.max(8,b.r));          // small drops heat and cool faster
+      b.T+=power*heat*Math.max(0,(depth-.68)/.32)*.5*dt*k;           // bulb heats the bottom
+      b.T-=Math.max(0,(.32-depth)/.32)*.55*dt*k;                      // top of the glass cools it
+      b.T+=(.45*power-b.T)*.06*dt*k;                                  // drifts toward room temperature
+      b.T=Math.max(0,Math.min(1.25,b.T));
+      var ay=-(b.T-.45)*A+(b.r<11?10:0),                              // hot = up, cold = down, droplets sink
+          ax=Math.sin(t*.5+b.ph)*5+Math.sin(t*.23+b.ph*2)*4;
+      b.vx+=ax*dt;b.vy+=ay*dt;
+      b.vx*=Math.pow(.12,dt);b.vy*=Math.pow(.32,dt);                  // thick liquid: heavy drag
+      b.x+=b.vx*dt;b.y+=b.vy*dt;
+      var lim=hw(b.y)-b.r*.72;
+      if(b.x>lim){b.x=lim;b.vx=-Math.abs(b.vx)*.2}
+      if(b.x<-lim){b.x=-lim;b.vx=Math.abs(b.vx)*.2}
+      if(b.y<b.r*.9){b.y=b.r*.9;b.vy=Math.abs(b.vy)*.1}
+      if(b.y>H-b.r*.5){b.y=H-b.r*.5;b.vy=-Math.abs(b.vy)*.05}
+      if(b.r<11&&b.y>H-50){pending+=b.r*b.r;b.dead=true}              // droplets that reach the pool melt back in
+    }
+    for(i=0;i<blobs.length;i++)for(j=i+1;j<blobs.length;j++){
+      a=blobs[i];b=blobs[j];
+      if(a.dead||b.dead)continue;
+      var dx=b.x-a.x,dy=b.y-a.y,dd=Math.hypot(dx,dy)||1,sm=a.r<b.r?a:b,bg=sm===a?b:a;
+      if(sm.r<11&&dd<(bg.r<11?(a.r+b.r)*.7:bg.r*.62)){               // droplets merge into whatever they touch
+        var A1=bg.r*bg.r,A2=sm.r*sm.r;
+        bg.vx=(bg.vx*A1+sm.vx*A2)/(A1+A2);bg.vy=(bg.vy*A1+sm.vy*A2)/(A1+A2);bg.T=(bg.T*A1+sm.T*A2)/(A1+A2);
+        bg.r=Math.min(42,Math.sqrt(A1+A2));sm.dead=true;
+      }else{
+        var min=(a.r+b.r)*.8;
+        if(dd<min){var f=(min-dd)*6*dt;a.x-=dx/dd*f;a.y-=dy/dd*f;b.x+=dx/dd*f;b.y+=dy/dd*f}
+      }
+    }
+    blobs=blobs.filter(function(q){return!q.dead});
+    spawnT+=dt;
+    if(pending>400&&spawnT>2.5){var r=Math.min(30,Math.sqrt(pending));pending-=r*r;blobs.push(mk(r,(Math.random()-.5)*50,H-72,.9));spawnT=0}
+    parts=parts.filter(function(p){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;return p.t<p.life});
+    rings=rings.filter(function(r2){r2.t+=dt;return r2.t<.45});
+  }
+
+  function pop(b){
+    blobs.splice(blobs.indexOf(b),1);popped++;
+    document.getElementById('count').textContent='Popped: '+popped;
+    var n=5+Math.floor(Math.random()*3),w=[],s=0,i;
+    for(i=0;i<n;i++){w[i]=.3+Math.random();s+=w[i]}
+    var A=b.r*b.r;
+    for(i=0;i<n;i++){                                 // the wax splits into droplets (same total volume)
+      var ang=Math.random()*6.283,sp=70+Math.random()*90,
+          nb=mk(Math.max(3,Math.sqrt(A*w[i]/s)),b.x+Math.cos(ang)*b.r*.5,b.y+Math.sin(ang)*b.r*.5,b.T);
+      nb.vx=Math.cos(ang)*sp;nb.vy=Math.sin(ang)*sp;blobs.push(nb);
+    }
+    rings.push({x:OX+b.x,y:OY+b.y,r:b.r,t:0});
+    for(i=0;i<16;i++){var a2=Math.random()*6.283,s2=60+Math.random()*180;parts.push({x:OX+b.x,y:OY+b.y,vx:Math.cos(a2)*s2,vy:Math.sin(a2)*s2,life:.5+Math.random()*.5,t:0})}
+  }
+
+  /* ---------------- wax rendering ---------------- */
+  function addField(b){
+    var R=b.r*4.5,x0=Math.max(0,Math.floor((b.x-R+115)/SC)),x1=Math.min(GW-1,Math.ceil((b.x+R+115)/SC)),
+        y0=Math.max(0,Math.floor((b.y-R)/SC)),y1=Math.min(GH-1,Math.ceil((b.y+R)/SC)),r2=b.r*b.r;
+    for(var gy=y0;gy<=y1;gy++){
+      var dy=(gy+.5)*SC-b.y,dy2=dy*dy,row=gy*GW;
+      for(var gx=x0;gx<=x1;gx++){var dx=(gx+.5)*SC-115-b.x;F[row+gx]+=r2/(dx*dx+dy2+1)}
+    }
+  }
+  function ss(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x)}
+  function renderWax(){
+    F.fill(0);pool.forEach(addField);blobs.forEach(addField);
+    var pf=.35+.65*power,E=pal.edge,C=pal.core,gx,gy;
+    for(gy=0;gy<GH;gy++)for(gx=0;gx<GW;gx++){
+      var i=gy*GW+gx,f=F[i],o=i*4;
+      if(f<.85){D[o+3]=0;continue}
+      var fl=gx>0?F[i-1]:f,fr=gx<GW-1?F[i+1]:f,fu=gy>0?F[i-GW]:f,fd=gy<GH-1?F[i+GW]:f,
+          nx=(fl-fr)*2.5,ny=(fu-fd)*2.5,lit=(nx*-.45+ny*-.55+.7)/Math.sqrt(nx*nx+ny*ny+1),   // light from the upper left
+          core=Math.min(1,Math.max(0,(f-1)/3)),sh=(.55+.6*lit)*pf,spec=Math.pow(Math.max(0,lit-.35),3)*220*pf;
+      D[o]=Math.min(255,(E[0]+(C[0]-E[0])*core)*sh+spec);
+      D[o+1]=Math.min(255,(E[1]+(C[1]-E[1])*core)*sh+spec);
+      D[o+2]=Math.min(255,(E[2]+(C[2]-E[2])*core)*sh+spec);
+      D[o+3]=ss(.92,1.08,f)*250;
+    }
+    wctx.putImageData(img,0,0);
+  }
+
+  /* ---------------- drawing ---------------- */
+  function rgb(a,k){return'rgb('+(a[0]*k|0)+','+(a[1]*k|0)+','+(a[2]*k|0)+')'}
+  function glassPath(){
+    var y;c.beginPath();
+    for(y=0;y<=H;y+=5){var x=OX-hw(y);y?c.lineTo(x,OY+y):c.moveTo(x,OY+y)}
+    for(y=H;y>=0;y-=5)c.lineTo(OX+hw(y),OY+y);
+    c.closePath();
+  }
+  function metalGrad(w){
+    var g=c.createLinearGradient(OX-w,0,OX+w,0);
+    g.addColorStop(0,'#141418');g.addColorStop(.3,'#6c6c78');g.addColorStop(.48,'#d0d0dc');g.addColorStop(.7,'#4e4e58');g.addColorStop(1,'#0f0f13');
+    return g;
+  }
+  function draw(){
+    c.clearRect(0,0,LW,LH);
+    var pf=.2+.8*power,i;
+    c.save();glassPath();c.clip();
+    var g=c.createLinearGradient(0,OY,0,OY+H);g.addColorStop(0,rgb(pal.liq[0],pf));g.addColorStop(1,rgb(pal.liq[1],pf));
+    c.fillStyle=g;c.fillRect(0,OY,LW,H);
+    c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+    c.drawImage(wcv,OX-115,OY,230,H);
+    if(power>.02){                                           // the bulb glowing up through the liquid
+      c.globalCompositeOperation='lighter';
+      var rg=c.createRadialGradient(OX,OY+H+10,10,OX,OY+H+10,230);
+      rg.addColorStop(0,'rgba('+pal.glow.join(',')+','+.55*power+')');rg.addColorStop(1,'rgba('+pal.glow.join(',')+',0)');
+      c.fillStyle=rg;c.fillRect(0,OY,LW,H);c.globalCompositeOperation='source-over';
+    }
+    var ts=c.createLinearGradient(0,OY,0,OY+90);ts.addColorStop(0,'rgba(0,0,0,.35)');ts.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=ts;c.fillRect(0,OY,LW,90);
+    var gl=c.createLinearGradient(OX-115,0,OX-55,0);gl.addColorStop(0,'rgba(255,255,255,.22)');gl.addColorStop(1,'rgba(255,255,255,0)');
+    c.fillStyle=gl;c.fillRect(OX-115,OY,60,H);
+    var gr=c.createLinearGradient(OX+50,0,OX+115,0);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.3)');
+    c.fillStyle=gr;c.fillRect(OX+50,OY,65,H);
+    c.globalCompositeOperation='lighter';                    // pop effects
+    rings.forEach(function(r){
+      var s=r.t/.45;c.strokeStyle='rgba(255,255,255,'+(1-s)*.7+')';c.lineWidth=.5+2*(1-s);
+      c.beginPath();c.arc(r.x,r.y,r.r*(1+s*1.4),0,6.283);c.stroke();
+    });
+    parts.forEach(function(p){
+      c.fillStyle='rgba('+pal.core.join(',')+','+(1-p.t/p.life)+')';c.beginPath();c.arc(p.x,p.y,2.4,0,6.283);c.fill();
+    });
+    c.globalCompositeOperation='source-over';
+    c.restore();
+    glassPath();c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=1.5;c.stroke();
+
+    c.fillStyle=metalGrad(60);                               // cap
+    c.beginPath();c.moveTo(OX-44,OY+6);c.quadraticCurveTo(OX-36,40,OX-12,30);c.lineTo(OX+12,30);c.quadraticCurveTo(OX+36,40,OX+44,OY+6);c.closePath();c.fill();
+    c.beginPath();c.arc(OX,24,10,0,6.283);c.fill();
+    c.fillRect(OX-46,OY-4,92,10);
+    c.fillStyle=metalGrad(125);                              // base
+    c.beginPath();c.moveTo(OX-90,OY+H-4);c.lineTo(OX+90,OY+H-4);c.bezierCurveTo(OX+106,545,OX+120,590,OX+124,625);
+    c.lineTo(OX-124,625);c.bezierCurveTo(OX-120,590,OX-106,545,OX-90,OY+H-4);c.closePath();c.fill();
+    c.fillStyle='rgba(255,255,255,.18)';c.fillRect(OX-92,OY+H-4,184,3);
+    if(power>.05){c.fillStyle='rgba('+pal.glow.join(',')+','+.5*power+')';c.fillRect(OX-80,OY+H-2,160,2)}
+  }
+
+  /* ---------------- controls ---------------- */
+  var swEl=document.getElementById('sw');
+  PAL.forEach(function(p,i){
+    var b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Color '+(i+1));
+    b.style.background='linear-gradient(135deg,'+rgb(p.core,1)+','+rgb(p.edge,1)+')';
+    b.addEventListener('click',function(){setPal(i)});swEl.appendChild(b);
+  });
+  function setPal(i){
+    pal=PAL[i];document.body.style.setProperty('--g',pal.glow.join(','));
+    [].forEach.call(swEl.children,function(b,k){b.setAttribute('aria-pressed',k===i)});
+  }
+  var pw=document.getElementById('power');
+  pw.addEventListener('click',function(){on=!on;pw.setAttribute('aria-pressed',on);pw.textContent='Power: '+(on?'on':'off')});
+  document.getElementById('heat').addEventListener('input',function(e){heat=e.target.value/100});
+
+  function lampPos(e){var r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*LW-OX,y:(e.clientY-r.top)/r.height*LH-OY}}
+  function hit(p){
+    var best=null,bd=1e9;
+    blobs.forEach(function(b){var d=Math.hypot(b.x-p.x,b.y-p.y);if(d<b.r*1.15&&d<bd){bd=d;best=b}});
+    return best;
+  }
+  cv.addEventListener('pointerdown',function(e){var b=hit(lampPos(e));if(b)pop(b)});
+  cv.addEventListener('pointermove',function(e){cv.style.cursor=hit(lampPos(e))?'pointer':'default'});
+
+  var last=performance.now();
+  function loop(now){
+    var dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;
+    step(dt);renderWax();draw();
+    document.body.style.setProperty('--p',power.toFixed(3));
+    requestAnimationFrame(loop);
+  }
+  init();setPal(0);
+  for(var w=0;w<600;w++)step(.05);                           // warm up so the lamp doesn't start frozen
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
