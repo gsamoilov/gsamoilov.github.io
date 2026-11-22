@@ -56,7 +56,7 @@ input[type=range]{accent-color:var(--orange);width:130px}
   var dpr=Math.min(2,devicePixelRatio||1);cv.width=LW*dpr;cv.height=LH*dpr;c.setTransform(dpr,0,0,dpr,0,0);
 
   /* wax is rendered as a low-res "metaball" field, then smoothed up. Cheap and it looks liquid. */
-  var GW=115,GH=208,SC=2,F=new Float32Array(GW*GH),wcv=document.createElement('canvas');
+  var GW=115,GH=208,SC=2,F=new Float32Array(GW*GH),HT=null,wcv=document.createElement('canvas');
   wcv.width=GW;wcv.height=GH;
   var wctx=wcv.getContext('2d'),img=wctx.createImageData(GW,GH),D=img.data;
 
@@ -150,16 +150,21 @@ input[type=range]{accent-color:var(--orange);width:130px}
   function ss(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x)}
   function renderWax(){
     F.fill(0);pool.forEach(addField);blobs.forEach(addField);
-    var pf=.35+.65*power,E=pal.edge,C=pal.core,gx,gy;
+    var pf=.35+.65*power,E=pal.edge,C=pal.core,gx,gy,i,f;
+    if(!HT||HT.length!==F.length)HT=new Float32Array(F.length);
+    for(i=0;i<F.length;i++){f=F[i];HT[i]=f>1?Math.sqrt(1-1/f):0}      // dome height: steep rim, flat top. Replaces the raw field, whose huge peaks caused dark spots
     for(gy=0;gy<GH;gy++)for(gx=0;gx<GW;gx++){
-      var i=gy*GW+gx,f=F[i],o=i*4;
+      i=gy*GW+gx;f=F[i];var o=i*4;
       if(f<.85){D[o+3]=0;continue}
-      var fl=gx>0?F[i-1]:f,fr=gx<GW-1?F[i+1]:f,fu=gy>0?F[i-GW]:f,fd=gy<GH-1?F[i+GW]:f,
-          nx=(fl-fr)*2.5,ny=(fu-fd)*2.5,lit=(nx*-.45+ny*-.55+.7)/Math.sqrt(nx*nx+ny*ny+1),   // light from the upper left
-          core=Math.min(1,Math.max(0,(f-1)/3)),sh=(.55+.6*lit)*pf,spec=Math.pow(Math.max(0,lit-.35),3)*220*pf;
-      D[o]=Math.min(255,(E[0]+(C[0]-E[0])*core)*sh+spec);
-      D[o+1]=Math.min(255,(E[1]+(C[1]-E[1])*core)*sh+spec);
-      D[o+2]=Math.min(255,(E[2]+(C[2]-E[2])*core)*sh+spec);
+      var hl=gx>0?HT[i-1]:HT[i],hr=gx<GW-1?HT[i+1]:HT[i],hu=gy>0?HT[i-GW]:HT[i],hd=gy<GH-1?HT[i+GW]:HT[i],
+          nx=(hl-hr)*1.6,ny=(hu-hd)*1.6,nl=Math.sqrt(nx*nx+ny*ny+1),
+          lit=(nx*-.5+ny*-.6+.62)/nl,                                   // light from the upper left
+          core=Math.min(1,Math.max(0,(f-1)/2.2)),
+          sh=(.78+.38*lit)*pf,spec=Math.pow(Math.max(0,lit-.62),2)*160*pf,
+          rim=Math.pow(1-Math.min(1,HT[i]*1.15),2)*.18;                 // slightly darker at the edge so blobs read as round
+      D[o]=Math.min(255,(E[0]+(C[0]-E[0])*core)*(sh-rim)+spec);
+      D[o+1]=Math.min(255,(E[1]+(C[1]-E[1])*core)*(sh-rim)+spec);
+      D[o+2]=Math.min(255,(E[2]+(C[2]-E[2])*core)*(sh-rim)+spec);
       D[o+3]=ss(.92,1.08,f)*250;
     }
     wctx.putImageData(img,0,0);
