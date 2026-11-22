@@ -38,10 +38,6 @@ a{color:inherit}
 #prog{position:fixed;left:0;top:0;width:100%;height:3px;z-index:60;pointer-events:none;transform-origin:left;transform:scaleX(var(--sp,0));
   background:linear-gradient(90deg,var(--yellow),var(--orange),var(--red));box-shadow:0 0 12px var(--orange)}
 
-#toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:50;pointer-events:none;opacity:0;
-  font-weight:700;font-size:clamp(1.4rem,5vw,3rem);letter-spacing:-.02em;text-shadow:0 0 30px var(--yellow)}
-#toast.go{animation:toast 2.2s ease-out}
-@keyframes toast{0%{opacity:0;transform:translateX(-50%) scale(.8)}15%{opacity:1;transform:translateX(-50%) scale(1.06)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1)}}
 
 nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
   padding:18px clamp(20px,5vw,56px);background:rgba(255,100,20,.06);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
@@ -118,7 +114,6 @@ body.neon .brand img{filter:drop-shadow(0 0 10px rgba(0,229,255,.8)) hue-rotate(
 body.neon .card:hover{border-color:rgba(0,229,255,.85);box-shadow:0 0 50px rgba(0,229,255,.32),inset 0 1px 0 rgba(220,255,255,.25)}
 body.neon .mail{background:linear-gradient(100deg,rgba(0,229,255,.3),rgba(138,43,255,.28) 55%,rgba(255,43,214,.3));border-color:rgba(0,229,255,.6)}
 body.neon .mail:hover{box-shadow:0 0 36px rgba(0,229,255,.45),inset 0 1px 0 rgba(220,255,255,.3)}
-body.neon #toast{text-shadow:0 0 30px #00e5ff,2px 0 #ff2bd6,-2px 0 #00e5ff}
 body.neon .ltr,body.neon .fly,body.neon h2,body.neon .name{text-shadow:2px 0 rgba(255,43,214,.6),-2px 0 rgba(0,229,255,.6),0 0 22px currentColor}
 body.neon h2{animation:glitch 5s infinite}
 @keyframes glitch{0%,91%,100%{transform:none}92%{transform:translate(-4px,0) skewX(8deg)}94%{transform:translate(4px,0) skewX(-6deg)}96%{transform:translate(-2px,0)}}
@@ -145,7 +140,7 @@ body.neon .glass::before{content:"";position:absolute;inset:0;padding:1px;border
 .u-bar{width:min(360px,70vw);height:6px;border:1px solid #00e5ff;border-radius:99px;overflow:hidden}
 .u-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#00e5ff,#ff2bd6);transition:width 2.2s cubic-bezier(.3,.7,.2,1)}
 
-@media (max-width:560px){nav ul li:nth-child(n+3){display:none}}
+@media (max-width:560px){nav ul{gap:16px;font-size:.88rem}nav ul li:nth-child(-n+2){display:none}}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .hero{height:auto}.stage{position:static;height:auto;padding-top:20vh;padding-bottom:10vh}
@@ -159,7 +154,6 @@ body.neon .glass::before{content:"";position:absolute;inset:0;padding:1px;border
 <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
 <canvas id="web" aria-hidden="true"></canvas>
 <canvas id="fx" aria-hidden="true"></canvas>
-<div id="toast" aria-hidden="true"></div>
 
 <nav>
   <a class="brand" href="/"><img src="/images/logo.png" alt=""><b>greg.</b></a>
@@ -297,10 +291,9 @@ document.addEventListener('pointermove',function(e){
 (function(){
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   var wcv=document.getElementById('web'),wc=wcv.getContext('2d'),
-      fcv=document.getElementById('fx'),fc=fcv.getContext('2d'),
-      toast=document.getElementById('toast');
+      fcv=document.getElementById('fx'),fc=fcv.getContext('2d');
   var W=0,H=0,ST=46,cols=0,rows=0,nodes=[];
-  var M={x:innerWidth/2,y:innerHeight/2,inside:false},sm={x:M.x,y:M.y};
+  var OFF=-9999,M={x:OFF,y:OFF,inside:false},sm={x:OFF,y:OFF};   /* start off-screen so the web is flat until a pointer shows up */
   var pulses=[],bolts=[],neon=false,busy=false,flash=0,sv=0,lastSY=scrollY;
 
   function build(){
@@ -499,10 +492,6 @@ document.addEventListener('pointermove',function(e){
     try{localStorage.setItem('greg-neon',on?'1':'0')}catch(err){}
     gradient();
   }
-  function say(txt){
-    toast.textContent=txt;
-    toast.classList.remove('go');void toast.offsetWidth;toast.classList.add('go');
-  }
   function unlockSeq(){
     if(busy)return;
     if(reduce){setNeon(!neon);return}
@@ -520,7 +509,6 @@ document.addEventListener('pointermove',function(e){
       setTimeout(function(){
         ov.remove();busy=false;flash=1;
         zap(W/2,H/2);L.forEach(kick);
-        say(on?'🔓 THEME UNLOCKED: NEON':'🔥 EMBER RESTORED');
       },850);
     },350+lines.length*380+300);
   }
@@ -536,9 +524,10 @@ document.addEventListener('pointermove',function(e){
       place(drag);
     }
   });
+  addEventListener('pointerup',function(e){if(e.pointerType==='touch'){M.inside=false;M.x=M.y=OFF;sm.x=sm.y=OFF}});   // fingers don't leave a dent
   addEventListener('pointerup',release);
   addEventListener('pointercancel',release);
-  document.addEventListener('mouseleave',function(){M.inside=false});
+  document.addEventListener('mouseleave',function(){M.inside=false;M.x=M.y=OFF;sm.x=sm.y=OFF});
   addEventListener('pointerdown',function(e){shock(e.clientX,e.clientY)});   // click = shockwave only
   addEventListener('resize',function(){build();gradient()});
 
