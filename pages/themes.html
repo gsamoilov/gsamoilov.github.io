@@ -86,6 +86,14 @@
   --font:"Space Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 
+[data-theme="aero"]{
+  --bg:#8fd3ff;--ink:#0b3a5e;--muted:#2d6288;
+  --card:rgba(255,255,255,.34);--bd:rgba(255,255,255,.9);--bw:1.5px;--blur:blur(12px) saturate(165%);--rad:26px;
+  --sh:0 10px 30px rgba(20,110,190,.28),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -12px 26px rgba(120,220,255,.3);--spec:rgba(255,255,255,.3);
+  --acc:linear-gradient(#b5f5ff 0%,#3cb8f2 48%,#1b92dc 52%,#5cd2ff 100%);--accink:#fff;--pill:99px;
+  --font:"Segoe UI","Frutiger","Trebuchet MS","Helvetica Neue",Arial,sans-serif;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--bg)}
 html[data-theme="glass"]{background:linear-gradient(160deg,#2a0d1c,#150812 55%,#1a0d2e)}
@@ -94,6 +102,12 @@ html[data-theme="synth"]{background:linear-gradient(#1a0033,#3a0057 58%,#12002b 
 html[data-theme="aurora"]{background:radial-gradient(ellipse at 50% 120%,#0a2a3a,transparent 60%),#040d14}
 html[data-theme="abyss"]{background:linear-gradient(#03121f,#020912 60%,#01040a)}
 html[data-theme="compass"]{background:radial-gradient(ellipse at 50% 30%,#f7f0de,#e9dfc6)}
+html[data-theme="aero"]{background:
+  radial-gradient(circle at 10% 6%,rgba(255,255,225,.95),rgba(255,255,200,.35) 9%,transparent 24%),
+  radial-gradient(ellipse 26% 9% at 24% 24%,rgba(255,255,255,.85),transparent 70%),radial-gradient(ellipse 30% 10% at 72% 16%,rgba(255,255,255,.75),transparent 70%),
+  radial-gradient(ellipse 22% 8% at 52% 38%,rgba(255,255,255,.6),transparent 70%),
+  radial-gradient(ellipse 120% 34% at 25% 108%,#58cc4a 0,#3aa845 55%,transparent 72%),radial-gradient(ellipse 100% 28% at 90% 110%,#2fae55 0,#1f8a48 55%,transparent 72%),
+  linear-gradient(#3fa9f5 0%,#86d0ff 42%,#d6f3ff 72%,#e8fff0 100%)}
 html[data-theme="blueprint"]{background:radial-gradient(ellipse at 50% 30%,#1457c4,#0b3d91 70%)}
 body{color:var(--ink);font-family:var(--font,"Space Grotesk",system-ui,sans-serif);line-height:1.6;min-height:100vh;transition:color .3s}
 canvas{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
@@ -115,6 +129,12 @@ canvas{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-ev
 [data-theme="radar"] h1,[data-theme="radar"] h2{text-shadow:0 0 14px rgba(255,176,0,.55)}
 [data-theme="abyss"] h1{text-shadow:0 0 30px rgba(40,220,255,.5)}
 [data-theme="aurora"] h1{text-shadow:0 0 34px rgba(90,255,190,.45)}
+[data-theme="aero"] h1{color:#fff;text-shadow:0 2px 0 rgba(0,90,160,.45),0 6px 24px rgba(20,110,200,.5)}
+[data-theme="aero"] .card::before{content:"";position:absolute;left:0;right:0;top:0;height:46%;pointer-events:none;background:linear-gradient(rgba(255,255,255,.6),rgba(255,255,255,.08))}
+[data-theme="aero"] .card h2,[data-theme="aero"] .card p,[data-theme="aero"] .stats{position:relative}
+[data-theme="aero"] .btn,[data-theme="aero"] .track button[aria-pressed="true"]{border-color:rgba(255,255,255,.95);text-shadow:0 1px 2px rgba(0,60,120,.65);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 10px rgba(20,110,190,.35)}
+[data-theme="aero"] input{background:rgba(255,255,255,.6);box-shadow:inset 0 2px 5px rgba(20,110,190,.2)}
+[data-theme="aero"] .back{color:#0b3a5e}
 [data-theme="space"] h1{text-shadow:0 0 30px rgba(130,150,255,.7)}
 
 main{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:78px clamp(18px,4vw,40px) 150px}
@@ -156,6 +176,18 @@ input::placeholder{color:var(--muted)}
 .nav.off{opacity:0;pointer-events:none}
 .nav svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ffb703;outline-offset:3px}
+
+/* secret: type "yam" */
+#yam{position:fixed;inset:0;z-index:30;display:none;place-items:center;align-content:center;text-align:center;cursor:pointer;font-family:"Segoe UI","Trebuchet MS",Arial,sans-serif;
+  background:radial-gradient(ellipse at 50% 40%,rgba(255,255,255,.6),rgba(110,200,255,.4) 70%);-webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%)}
+#yam.show{display:grid;animation:yin .55s cubic-bezier(.2,1.4,.4,1)}
+@keyframes yin{from{opacity:0;transform:scale(.6)}}
+#yam svg{width:min(80vw,470px);height:auto;position:relative;animation:ybob 3.2s ease-in-out infinite;filter:drop-shadow(0 18px 22px rgba(10,80,150,.35))}
+@keyframes ybob{50%{transform:translateY(-12px) rotate(2deg)}}
+#yam h2{position:relative;font-size:clamp(2.6rem,10vw,5rem);line-height:1;color:#fff;letter-spacing:-.02em;text-shadow:0 2px 0 rgba(0,90,160,.5),0 6px 22px rgba(10,100,190,.55)}
+#yam p{position:relative;color:#0e4a78;font-size:.95rem;margin-top:8px}
+#yam .yb{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.95),rgba(160,230,255,.22) 55%,rgba(255,255,255,.6));border:1.5px solid rgba(255,255,255,.85);animation:yfl 6s ease-in-out infinite}
+@keyframes yfl{50%{transform:translateY(-22px)}}
 </style>
 </head>
 <body>
@@ -176,7 +208,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ffb7
       <h2>Stats</h2>
       <div class="stats">
         <div><b>0</b><span>design degrees</span></div>
-        <div><b>12</b><span>themes</span></div>
+        <div><b>13</b><span>themes</span></div>
         <div><b>3</b><span>tungs</span></div>
       </div>
     </section>
@@ -186,6 +218,33 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ffb7
     </section>
   </div>
 </main>
+
+<div id="yam" role="dialog" aria-label="A glassy yam" aria-hidden="true">
+  <i class="yb" style="width:70px;height:70px;left:12%;top:18%"></i><i class="yb" style="width:36px;height:36px;left:24%;top:70%;animation-delay:-2s"></i>
+  <i class="yb" style="width:96px;height:96px;right:10%;top:14%;animation-delay:-1s"></i><i class="yb" style="width:44px;height:44px;right:20%;top:68%;animation-delay:-3s"></i>
+  <i class="yb" style="width:26px;height:26px;left:48%;top:10%;animation-delay:-4s"></i>
+  <svg viewBox="0 0 340 230" aria-hidden="true">
+    <defs>
+      <linearGradient id="yb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf94"/><stop offset=".45" stop-color="#ff8a4a"/><stop offset=".55" stop-color="#e8505e"/><stop offset="1" stop-color="#9b2f72"/></linearGradient>
+      <radialGradient id="yg" cx=".3" cy=".3" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <linearGradient id="yl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2ffbe"/><stop offset="1" stop-color="#2fae4a"/></linearGradient>
+      <clipPath id="yc"><path d="M42,118 C34,78 80,52 130,58 C180,40 252,52 288,88 C308,110 284,150 232,162 C180,176 108,170 70,154 C52,146 44,134 42,118 Z"/></clipPath>
+    </defs>
+    <ellipse cx="170" cy="210" rx="120" ry="11" fill="rgba(20,90,160,.28)"/>
+    <path d="M44,112 C18,92 16,62 38,46 C54,68 54,92 44,112 Z" fill="url(#yl)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+    <path d="M50,108 C58,80 80,66 104,66 C96,88 76,104 50,108 Z" fill="url(#yl)" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+    <path d="M42,118 C34,78 80,52 130,58 C180,40 252,52 288,88 C308,110 284,150 232,162 C180,176 108,170 70,154 C52,146 44,134 42,118 Z" fill="url(#yb)"/>
+    <g clip-path="url(#yc)">
+      <path d="M20,148 C100,178 230,188 310,138 L330,236 L10,236 Z" fill="rgba(120,230,255,.38)"/>
+      <ellipse cx="122" cy="84" rx="96" ry="30" fill="url(#yg)" transform="rotate(-9 122 84)"/>
+      <path d="M250,96 C262,112 258,132 240,146" stroke="rgba(255,255,255,.45)" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <g fill="rgba(130,30,70,.32)"><circle cx="150" cy="112" r="3"/><circle cx="196" cy="126" r="2.6"/><circle cx="118" cy="132" r="2.4"/><circle cx="226" cy="108" r="2.8"/><circle cx="170" cy="144" r="2.2"/><circle cx="92" cy="110" r="2.2"/></g>
+    </g>
+    <path d="M42,118 C34,78 80,52 130,58 C180,40 252,52 288,88 C308,110 284,150 232,162 C180,176 108,170 70,154 C52,146 44,134 42,118 Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+    <g fill="#fff"><path d="M300 40 l4 12 12 4 -12 4 -4 12 -4 -12 -12 -4 12 -4z"/><path d="M26 170 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z"/><circle cx="262" cy="70" r="4" opacity=".8"/></g>
+  </svg>
+  <h2>Yam.</h2><p>click anywhere to close</p>
+</div>
 
 <div class="dock">
   <button class="nav off" id="prev" type="button" aria-label="Earlier themes"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -429,9 +488,55 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ffb7
           c.fillStyle='rgba(255,220,120,'+b.life+')';c.beginPath();c.arc(b.x,b.y,5+(1-b.life)*10,0,6.283);c.fill();
           c.strokeStyle='rgba(255,190,60,'+b.life*.6+')';c.lineWidth=1.5;c.beginPath();c.arc(b.x,b.y,12+(1-b.life)*40,0,6.283);c.stroke();
         }
+      }},
+
+    /* Frutiger Aero: sky, gloss and soap bubbles. Click a bubble to pop it. */
+    aero:{label:'Frutiger Aero',desc:'Blue skies and glossy bubbles. Click a bubble to pop it.',bub:[],pops:[],
+      init:function(){this.bub=[];this.pops=[];var n=Math.max(24,Math.min(58,W*H/26000|0));for(var i=0;i<n;i++)this.bub.push(this.mk(true))},
+      mk:function(any){var r=8+Math.random()*Math.random()*46;return{x:Math.random()*W,y:any?Math.random()*H:H+r+10,r:r,vy:.25+Math.random()*.65*(1-r/100),ph:Math.random()*6.28,w:.6+Math.random()*1.2}},
+      click:function(x,y){
+        for(var i=this.bub.length-1;i>=0;i--){var b=this.bub[i];
+          if(Math.hypot(b.x-x,b.y-y)<=b.r+6){this.pops.push({x:b.x,y:b.y,r:b.r,t:0});this.bub[i]=this.mk(false);break}}
+      },
+      draw:function(now,dt){
+        var k=dt/16.7,i,b,g;
+        for(i=0;i<this.bub.length;i++){
+          b=this.bub[i];b.y-=b.vy*k;b.x+=Math.sin(now/900*b.w+b.ph)*.35*k;
+          var dx=sm.x-b.x,dy=sm.y-b.y,d=Math.hypot(dx,dy);
+          if(d<230&&d>1){b.x+=dx*.004*k;b.y+=dy*.002*k}           // bubbles drift gently toward you
+          if(b.y<-b.r-10){this.bub[i]=this.mk(false);continue}
+          g=c.createRadialGradient(b.x-b.r*.3,b.y-b.r*.35,b.r*.05,b.x,b.y,b.r);
+          g.addColorStop(0,'rgba(255,255,255,.8)');g.addColorStop(.35,'rgba(190,240,255,.16)');g.addColorStop(.85,'rgba(110,205,255,.22)');g.addColorStop(1,'rgba(255,255,255,.7)');
+          c.fillStyle=g;c.beginPath();c.arc(b.x,b.y,b.r,0,6.2832);c.fill();
+          c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=1.2;c.stroke();
+          c.fillStyle='rgba(255,255,255,.9)';c.beginPath();c.ellipse(b.x-b.r*.35,b.y-b.r*.45,b.r*.22,b.r*.12,-.7,0,6.2832);c.fill();
+          c.strokeStyle='rgba(140,255,200,.5)';c.lineWidth=Math.max(1,b.r*.07);c.beginPath();c.arc(b.x,b.y,b.r*.78,.6,2.5);c.stroke();
+        }
+        this.pops=this.pops.filter(function(p){p.t+=dt/380;return p.t<1});
+        for(i=0;i<this.pops.length;i++){
+          var p=this.pops[i],a=1-p.t;
+          c.strokeStyle='rgba(255,255,255,'+a*.9+')';c.lineWidth=2;c.beginPath();c.arc(p.x,p.y,p.r*(1+.55*p.t),0,6.2832);c.stroke();
+          c.fillStyle='rgba(255,255,255,'+a+')';
+          for(var j=0;j<9;j++){var an=j*.698+.3,rr=p.r*(.9+1.3*p.t);c.beginPath();c.arc(p.x+Math.cos(an)*rr,p.y+Math.sin(an)*rr,Math.max(.6,2.6*a),0,6.2832);c.fill()}
+        }
+        /* a little sun-glint on the cursor */
+        var gx=sm.x,gy=sm.y;glowDot(gx,gy,34,'255,255,255',.55);
+        c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=2;c.lineCap='round';
+        c.beginPath();c.moveTo(gx-20,gy);c.lineTo(gx+20,gy);c.moveTo(gx,gy-20);c.lineTo(gx,gy+20);c.stroke();
+        c.lineWidth=1.2;c.beginPath();c.moveTo(gx-10,gy-10);c.lineTo(gx+10,gy+10);c.moveTo(gx+10,gy-10);c.lineTo(gx-10,gy+10);c.stroke();
       }}
   };
 
+  var nameInput=document.querySelector('input[type=text]'),yamEl=document.getElementById('yam'),buf='',yamT=0;
+  function showYam(){yamEl.classList.add('show');yamEl.setAttribute('aria-hidden','false');clearTimeout(yamT);yamT=setTimeout(hideYam,12000)}
+  function hideYam(){yamEl.classList.remove('show');yamEl.setAttribute('aria-hidden','true')}
+  yamEl.addEventListener('click',hideYam);
+  nameInput.addEventListener('input',function(){if(/yam/i.test(nameInput.value)){nameInput.value='';showYam()}});
+  addEventListener('keydown',function(e){
+    if(e.key==='Escape'){hideYam();return}
+    if(e.key.length!==1)return;
+    buf=(buf+e.key.toLowerCase()).slice(-3);if(buf==='yam'){buf='';showYam()}
+  });
   var names=Object.keys(themes),track=document.getElementById('dock'),prev=document.getElementById('prev'),next=document.getElementById('next'),btns={};
   names.forEach(function(n,i){
     var b=document.createElement('button');b.type='button';b.textContent=themes[n].label;if(i<10)b.title='Press '+(i===9?0:i+1);
@@ -451,12 +556,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #ffb7
     c.clearRect(0,0,W,H);if(cur.init)cur.init();
     document.getElementById('title').textContent=cur.label;
     document.getElementById('desc').textContent=cur.desc;
+    nameInput.placeholder=n==='aero'?'type "yam"…':'your name';
     names.forEach(function(k){btns[k].setAttribute('aria-pressed',k===n)});
     var b=btns[n];track.scrollTo({left:b.offsetLeft-(track.clientWidth-b.offsetWidth)/2});
   }
 
   addEventListener('pointermove',function(e){M.x=e.clientX;M.y=e.clientY});
-  addEventListener('pointerdown',function(){down=true});
+  addEventListener('pointerdown',function(e){down=true;if(cur&&cur.click)cur.click(e.clientX,e.clientY)});
   addEventListener('pointerup',function(){down=false});
   addEventListener('pointercancel',function(){down=false});
   addEventListener('resize',resize);
