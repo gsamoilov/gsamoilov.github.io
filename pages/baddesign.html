@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bad design | Greg</title>
+<link rel="icon" type="image/png" href="/images/favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#fff4e8;--muted:#b9a08c;--yellow:#ffb703;--orange:#ff6b00;--red:#ff3d1f;--ok:#7dffb0;
+  --g-bg:rgba(255,100,20,.07);--g-bd:rgba(255,150,60,.35);--g-sh:0 0 40px rgba(255,80,0,.14),inset 0 1px 0 rgba(255,220,180,.16);
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;color:var(--ink);font-family:var(--font);line-height:1.5;overflow-x:hidden;
+  background:radial-gradient(ellipse 60% 50% at 15% 0%,rgba(255,61,31,.18),transparent 70%),radial-gradient(ellipse 50% 40% at 90% 100%,rgba(255,183,3,.12),transparent 70%),#0c0705}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
+.back{position:absolute;top:24px;left:clamp(16px,4vw,36px);color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+main{max-width:720px;margin:0 auto;padding:84px 18px 60px}
+h1{font-size:clamp(2.6rem,9vw,4.6rem);letter-spacing:-.045em;line-height:1;text-align:center;
+  background:linear-gradient(100deg,var(--ink) 10%,var(--yellow) 50%,var(--orange) 75%,var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);text-align:center;margin:10px auto 26px;max-width:52ch}
+.glass{background:var(--g-bg);border:1px solid var(--g-bd);box-shadow:var(--g-sh);backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%)}
+.prog{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;color:var(--muted);font-size:.9rem}
+.pips{display:flex;gap:6px}
+.pips i{width:26px;height:6px;border-radius:9px;background:rgba(255,255,255,.12);transition:background .3s}
+.pips i.on{background:var(--yellow)}.pips i.done{background:var(--orange)}
+#stage{position:relative;border-radius:24px;padding:24px clamp(14px,4vw,28px) 26px;transition:box-shadow .3s,border-color .3s}
+#stage.ok{border-color:var(--ok);box-shadow:0 0 50px rgba(125,255,176,.3)}
+#stage h2{font-size:1.5rem;letter-spacing:-.03em;margin-bottom:4px}
+.hint{color:var(--muted);font-size:.97rem;margin-bottom:16px}
+.msg{min-height:1.5em;margin-top:10px;font-size:.93rem;color:var(--yellow);text-align:center}
+.msg.bad{color:#ff8f70}
+.disp{font-size:1.5rem;font-weight:500;letter-spacing:.04em;text-align:center;min-height:2.4rem;padding:6px 12px;margin-bottom:12px;border-radius:14px;
+  background:rgba(0,0,0,.28);border:1px solid var(--g-bd);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.disp.ph{color:rgba(255,244,232,.32)}
+.btn{font:inherit;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--g-bd);border-radius:99px;padding:9px 22px;cursor:pointer;transition:background .2s,transform .1s;white-space:nowrap}
+.btn:hover{background:rgba(255,160,60,.2)}.btn:active{transform:scale(.95)}
+.btn.hot{background:linear-gradient(100deg,var(--yellow),var(--orange) 60%,var(--red));color:#1a0a04;border-color:transparent;font-weight:500}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+#skip{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer;text-decoration:underline;opacity:0;pointer-events:none;transition:opacity .6s}
+#skip.show{opacity:.8;pointer-events:auto}
+.fine{text-align:center;color:var(--muted);font-size:.8rem;margin-top:22px;opacity:.75}
+.shake{animation:shk .35s}
+@keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* level 1: fan + keyboard */
+.arena{position:relative;height:clamp(330px,56vh,400px);border-radius:18px;overflow:hidden;cursor:none;touch-action:none;
+  background:rgba(0,0,0,.25);border:1px solid var(--g-bd);user-select:none;-webkit-user-select:none}
+.key{position:absolute;display:grid;place-items:center;border-radius:9px;font-weight:700;color:var(--ink);border:1px solid var(--g-bd);pointer-events:none;
+  background:linear-gradient(to top,rgba(255,183,3,.9) var(--f,0%),rgba(255,255,255,.07) var(--f,0%))}
+.key.hot{border-color:var(--yellow);box-shadow:0 0 14px rgba(255,183,3,.45)}
+.key.pop{animation:pop .25s}
+@keyframes pop{50%{transform:scale(1.18)}}
+.token{position:absolute;left:0;top:0;pointer-events:none;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+.fan{position:absolute;left:0;top:0;width:90px;height:90px;pointer-events:none;opacity:0;transition:opacity .15s}
+.fan.in{opacity:1}
+.fan svg{width:100%;height:100%;animation:spin 2.4s linear infinite}
+.fan.on svg{animation-duration:.18s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wind{position:absolute;left:0;top:0;width:460px;height:460px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .15s;
+  background:radial-gradient(circle,rgba(255,200,120,.22),rgba(255,200,120,.05) 60%,transparent 70%)}
+.wind.on{opacity:1}
+
+/* level 2: huge list */
+.vlist{position:relative;height:300px;overflow-y:scroll;border-radius:14px;border:1px solid var(--g-bd);background:rgba(0,0,0,.25)}
+.spacer{position:relative;width:100%}
+.vrow{position:absolute;left:0;right:0;height:36px;display:flex;align-items:center;padding:0 16px;font-variant-numeric:tabular-nums;cursor:pointer;border-bottom:1px solid rgba(255,150,60,.08)}
+.vrow:hover{background:rgba(255,160,60,.18)}
+
+/* level 3: rotary */
+.dialwrap{display:flex;justify-content:center;touch-action:none}
+.dialwrap svg{width:min(100%,340px);height:auto;cursor:grab;user-select:none;-webkit-user-select:none}
+
+/* level 4: generator */
+.slots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:14px;font-variant-numeric:tabular-nums}
+.slots .pre{color:var(--muted);margin-right:4px}
+.slots b{width:34px;height:42px;display:grid;place-items:center;border-radius:9px;border:1px solid var(--g-bd);background:rgba(0,0,0,.28);font-size:1.25rem}
+.slots b.lock{background:rgba(125,255,176,.18);border-color:var(--ok)}
+.slots b.cur{border-color:var(--yellow);box-shadow:0 0 12px rgba(255,183,3,.45)}
+.slots .sp{width:10px}
+.big{font-size:5.5rem;font-weight:700;line-height:1;text-align:center;margin:6px 0 16px;font-variant-numeric:tabular-nums;
+  background:linear-gradient(100deg,var(--yellow),var(--red));-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none}
+.center{display:flex;justify-content:center}
+.lockbtn{font-size:1.2rem;padding:14px 56px}
+
+/* level 5: captcha */
+.cap{position:relative;height:220px;border-radius:14px;border:1px solid var(--g-bd);background:rgba(0,0,0,.25);overflow:hidden;touch-action:none}
+.flee{position:absolute;left:0;top:0;display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:12px;background:#f7f2ea;color:#241812;font-weight:500;cursor:pointer;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.flee i{width:26px;height:26px;border:2px solid #7a6a5c;border-radius:5px;display:grid;place-items:center;font-style:normal;font-size:1.05rem;color:#1b9a53}
+
+/* level 6: terms */
+.terms{height:96px;overflow-y:scroll;scrollbar-width:none;padding:10px 14px;border-radius:12px;border:1px solid var(--g-bd);background:rgba(0,0,0,.28);font-size:.85rem;line-height:1.4;color:var(--muted)}
+.terms::-webkit-scrollbar{display:none}
+.terms p{margin-bottom:8px}
+
+.fin{text-align:center}
+.fin .tick{font-size:3.4rem;line-height:1;margin-bottom:6px}
+.fin ul{list-style:none;margin:16px auto;max-width:340px;color:var(--muted);font-size:.95rem;text-align:left}
+.fin li{display:flex;justify-content:space-between;gap:14px;padding:4px 0;border-bottom:1px solid rgba(255,150,60,.12)}
+.fin .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+@media (prefers-reduced-motion:reduce){.shake,.key.pop{animation:none}}
+</style>
+</head>
+<body>
+<a class="back" href="/">Back home</a>
+<main>
+  <h1>Bad design.</h1>
+  <p class="sub">A sign-up flow built to make you suffer. Six steps. Nothing you enter is saved or sent anywhere.</p>
+  <div class="prog"><div class="pips" id="pips"></div><span id="plabel"></span></div>
+  <section id="stage" class="glass" aria-live="polite"><div id="body"></div></section>
+  <button id="skip" type="button">Skip this level (the coward's way)</button>
+  <p class="fine">All phone numbers on this page are made up.</p>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var body=document.getElementById('body'),stage=document.getElementById('stage'),skipBtn=document.getElementById('skip'),
+      pips=document.getElementById('pips'),plabel=document.getElementById('plabel');
+  function $(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function rnd(a,b){return a+Math.random()*(b-a)}
+  function ri(n){return Math.floor(Math.random()*n)}
+  function pad(n,l){n=String(n);while(n.length<l)n='0'+n;return n}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function head(box,t,h){box.appendChild($('h2','',t));box.appendChild($('p','hint',h))}
+  function say(el,t,bad){el.textContent=t;el.className='msg'+(bad?' bad':'')}
+  function shake(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}
+  function digits(n){var a=[];for(var i=0;i<n;i++)a.push(ri(10));return a}
+
+  /* =============== 1. USERNAME: blow the cursor onto the keyboard with a fan =============== */
+  function L_fan(box,done){
+    head(box,'Username','Your cursor is the little arrow. The fan is your mouse. Hold the button to blow, push the arrow onto a key, then keep it still to type that letter.');
+    var disp=$('div','disp ph','username'),msg=$('p','msg'),arena=$('div','arena'),name='';
+    box.appendChild(disp);box.appendChild(arena);box.appendChild(msg);
+    var layoutRows=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['⌫','Z','X','C','V','B','N','M','✔']],rowsEls=[],keys=[];
+    layoutRows.forEach(function(row){var els=[];row.forEach(function(ch){var k=$('div','key',ch);k.dataset.k=ch;arena.appendChild(k);els.push(k);keys.push(k)});rowsEls.push(els)});
+    var wind=$('div','wind'),tok=$('div','token'),fan=$('div','fan');
+    tok.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24"><path d="M2 2 L2 19 L7 14.5 L10.5 22 L13.5 20.7 L10 13.5 L17 13.5 Z" fill="#fff4e8" stroke="#1a0a04" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+    fan.innerHTML='<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="rgba(20,10,5,.55)" stroke="#ffb703" stroke-width="3"/><g fill="#ff6b00" stroke="#ffb703" stroke-width="1.5"><ellipse cx="50" cy="27" rx="11" ry="21"/><ellipse cx="73" cy="50" rx="21" ry="11"/><ellipse cx="50" cy="73" rx="11" ry="21"/><ellipse cx="27" cy="50" rx="21" ry="11"/></g><circle cx="50" cy="50" r="8" fill="#fff4e8"/></svg>';
+    arena.appendChild(wind);arena.appendChild(tok);arena.appendChild(fan);
+    var aw=0,ah=0,kw=40,kh=38,t={x:36,y:26,vx:0,vy:0},P={x:-999,y:-999,down:false,inn:false},raf=0,last=performance.now(),cur=null,prog=0,armed=true;
+    function layout(){
+      aw=arena.clientWidth;ah=arena.clientHeight;
+      kw=Math.max(26,Math.min(54,(aw-20)/10-4));kh=Math.round(kw*.95);
+      rowsEls.forEach(function(row,r){
+        var n=row.length,tot=n*(kw+4)-4,x0=(aw-tot)/2,y=ah-12-(2-r)*(kh+4)-kh;
+        row.forEach(function(k,i){k.rect={x:x0+i*(kw+4),y:y,w:kw,h:kh};k.style.left=k.rect.x+'px';k.style.top=y+'px';k.style.width=kw+'px';k.style.height=kh+'px';k.style.fontSize=Math.round(kw*.42)+'px'});
+      });
+      if(!t.placed){t.x=aw/2-10;t.y=Math.min(100,ah*.28);t.placed=true}
+      t.x=clamp(t.x,2,aw-8);t.y=clamp(t.y,2,ah-8);
+    }
+    function upd(){disp.textContent=name||'username';disp.className='disp'+(name?'':' ph')}
+    function press(k){
+      var ch=k.dataset.k;k.classList.remove('pop');void k.offsetWidth;k.classList.add('pop');
+      if(ch==='⌫'){name=name.slice(0,-1);say(msg,'')}
+      else if(ch==='✔'){if(name.length>=3){say(msg,'Username accepted.');done(name)}else{say(msg,'Usernames need at least 3 letters.',true);shake(disp)}}
+      else if(name.length<12){name+=ch;say(msg,'')}else say(msg,'12 letters max.',true);
+      upd();
+    }
+    function setPos(e){var r=arena.getBoundingClientRect();P.x=e.clientX-r.left;P.y=e.clientY-r.top;P.inn=true}
+    arena.addEventListener('pointerdown',function(e){setPos(e);P.down=true;try{arena.setPointerCapture(e.pointerId)}catch(x){}});
+    arena.addEventListener('pointermove',setPos);
+    function up(){P.down=false}
+    arena.addEventListener('pointerup',up);arena.addEventListener('pointercancel',up);
+    arena.addEventListener('pointerleave',function(){if(!P.down)P.inn=false});
+    var R=230;
+    function tick(now){
+      var dt=Math.min(.033,(now-last)/1000);last=now;
+      if(P.inn&&P.down){
+        var dx=t.x-P.x,dy=t.y-P.y,d=Math.hypot(dx,dy)||1;
+        if(d<R){var k=1-d/R,f=2800*k*k+250*k;t.vx+=dx/d*f*dt;t.vy+=dy/d*f*dt}
+      }
+      var damp=Math.exp(-4.2*dt);t.vx*=damp;t.vy*=damp;
+      t.x+=t.vx*dt;t.y+=t.vy*dt;
+      if(t.x<2){t.x=2;t.vx=Math.abs(t.vx)*.5}if(t.x>aw-8){t.x=aw-8;t.vx=-Math.abs(t.vx)*.5}
+      if(t.y<2){t.y=2;t.vy=Math.abs(t.vy)*.5}if(t.y>ah-8){t.y=ah-8;t.vy=-Math.abs(t.vy)*.5}
+      var sp=Math.hypot(t.vx,t.vy),tx=t.x+2,ty=t.y+2,under=null,i,k2;
+      for(i=0;i<keys.length;i++){k2=keys[i];var rc=k2.rect;if(tx>=rc.x&&tx<=rc.x+rc.w&&ty>=rc.y&&ty<=rc.y+rc.h){under=k2;break}}
+      if(under!==cur){if(cur){cur.classList.remove('hot');cur.style.setProperty('--f','0%')}cur=under;prog=0;if(cur)cur.classList.add('hot')}
+      if(cur){
+        if(sp>90)armed=true;
+        if(sp<40&&armed){prog+=dt/.5;if(prog>=1){prog=0;armed=false;press(cur)}}else prog=Math.max(0,prog-dt*2);
+        cur.style.setProperty('--f',Math.round(prog*100)+'%');
+      }else armed=true;
+      tok.style.transform='translate('+t.x+'px,'+t.y+'px)';
+      fan.style.transform='translate('+(P.x-45)+'px,'+(P.y-45)+'px)';
+      wind.style.transform='translate('+(P.x-230)+'px,'+(P.y-230)+'px)';
+      fan.classList.toggle('in',P.inn);fan.classList.toggle('on',P.inn&&P.down);wind.classList.toggle('on',P.inn&&P.down);
+      raf=requestAnimationFrame(tick);
+    }
+    layout();upd();raf=requestAnimationFrame(tick);
+    addEventListener('resize',layout);
+    return{stop:function(){cancelAnimationFrame(raf);removeEventListener('resize',layout)}};
+  }
+
+  /* =============== 2. PHONE NUMBER: find yours in a list of every number =============== */
+  function L_list(box,done){
+    var n=ri(10000),tg=pad(n,4),ROW=36,TOTAL=10000;
+    head(box,'Phone number','Here is every number from +971 50 123 0000 to +971 50 123 9999. Find yours and click it. Yours is +971 50 123 '+tg+'.');
+    var wrap=$('div','vlist'),sp=$('div','spacer'),msg=$('p','msg'),rows=[],pool=Math.ceil(300/ROW)+3,i;
+    sp.style.height=TOTAL*ROW+'px';wrap.appendChild(sp);box.appendChild(wrap);box.appendChild(msg);
+    for(i=0;i<pool;i++){var r=$('div','vrow');sp.appendChild(r);rows.push(r)}
+    function render(){
+      var first=Math.max(0,Math.floor(wrap.scrollTop/ROW)-1);
+      rows.forEach(function(r,k){var idx=first+k;if(idx>=TOTAL){r.style.display='none';return}r.style.display='flex';r.dataset.i=idx;r.style.transform='translateY('+idx*ROW+'px)';r.textContent='+971 50 123 '+pad(idx,4)});
+    }
+    wrap.addEventListener('scroll',render);render();
+    wrap.addEventListener('click',function(e){
+      var r=e.target.closest('.vrow');if(!r)return;
+      if(+r.dataset.i===n){say(msg,'That is your number. Somehow.');done()}
+      else{say(msg,'That is not your number. Keep looking.',true);shake(wrap)}
+    });
+    return{stop:function(){}};
+  }
+
+  /* =============== 3. PHONE NUMBER: rotary dial =============== */
+  function L_rotary(box,done){
+    var tg=digits(7),typed=[],STOP=120;
+    head(box,'Phone number, old school','Dial +971 52 '+tg.slice(0,3).join('')+' '+tg.slice(3).join('')+'. Grab a hole, drag it clockwise to the metal stop, let go, and wait for the dial to come back.');
+    var disp=$('div','disp ph','+971 52 '),msg=$('p','msg'),wrap=$('div','dialwrap');
+    box.appendChild(disp);box.appendChild(wrap);box.appendChild(msg);
+    function need(d){return 20+30*(d===0?10:d)}
+    function hAng(d){return(STOP-need(d)+720)%360}
+    function pt(a,r){var rad=a*Math.PI/180;return[r*Math.sin(rad),-r*Math.cos(rad)]}
+    var NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','-160 -160 320 320');
+    var h='<defs><radialGradient id="pg" cx="40%" cy="35%"><stop offset="0" stop-color="#ffb703"/><stop offset=".6" stop-color="#ff6b00"/><stop offset="1" stop-color="#c8321e"/></radialGradient>'
+      +'<mask id="hm" maskUnits="userSpaceOnUse" x="-160" y="-160" width="320" height="320"><rect x="-160" y="-160" width="320" height="320" fill="#fff"/>';
+    var d,p;
+    for(d=0;d<10;d++){p=pt(hAng(d),100);h+='<circle cx="'+p[0].toFixed(2)+'" cy="'+p[1].toFixed(2)+'" r="21" fill="#000"/>'}
+    h+='</mask></defs><circle r="152" fill="#1a0f0a" stroke="#ffb703" stroke-opacity=".5" stroke-width="2"/>';
+    for(d=0;d<10;d++){p=pt(hAng(d),100);h+='<text x="'+p[0].toFixed(2)+'" y="'+(p[1]+8).toFixed(2)+'" text-anchor="middle" font-size="22" font-weight="700" fill="#fff4e8" font-family="Space Grotesk,sans-serif">'+d+'</text>'}
+    h+='<g id="plate" mask="url(#hm)"><circle r="140" fill="url(#pg)"/><circle r="140" fill="none" stroke="#fff4e8" stroke-opacity=".35" stroke-width="2"/><circle r="40" fill="#1a0f0a" fill-opacity=".25"/></g>';
+    var sp=pt(STOP,150),sp2=pt(STOP,126);
+    h+='<line x1="'+sp[0]+'" y1="'+sp[1]+'" x2="'+sp2[0]+'" y2="'+sp2[1]+'" stroke="#e8e0d6" stroke-width="9" stroke-linecap="round"/><circle r="30" fill="#1a0f0a" stroke="#ffb703" stroke-opacity=".6" stroke-width="2"/>';
+    svg.innerHTML=h;wrap.appendChild(svg);
+    var plate=svg.querySelector('#plate'),rot=0,raw=0,drag=-1,lastPhi=0,returning=false,raf=0;
+    function show(){
+      var s='+971 52 ';typed.forEach(function(x,i){s+=x+(i===2?' ':'')});
+      disp.textContent=s;disp.className='disp'+(typed.length?'':' ph');
+    }
+    function svgPt(e){var r=svg.getBoundingClientRect(),sc=320/r.width;return[(e.clientX-r.left)*sc-160,(e.clientY-r.top)*sc-160]}
+    function phi(p){return(Math.atan2(p[0],-p[1])*180/Math.PI+360)%360}
+    svg.addEventListener('pointerdown',function(e){
+      if(returning||drag>=0)return;
+      var q=svgPt(e),dd;
+      for(dd=0;dd<10;dd++){var hp=pt(hAng(dd)+rot,100);if(Math.hypot(q[0]-hp[0],q[1]-hp[1])<26){drag=dd;break}}
+      if(drag<0)return;
+      raw=rot;lastPhi=phi(q);try{svg.setPointerCapture(e.pointerId)}catch(x){}
+    });
+    svg.addEventListener('pointermove',function(e){
+      if(drag<0)return;
+      var f=phi(svgPt(e)),dl=((f-lastPhi+540)%360)-180;lastPhi=f;raw+=dl;
+      rot=clamp(raw,0,need(drag));plate.setAttribute('transform','rotate('+rot+')');
+    });
+    function release(){
+      if(drag<0)return;
+      var d2=drag;drag=-1;
+      var ok=rot>=need(d2)-7;
+      returning=true;var lt=performance.now();
+      (function back(now){
+        var dt=Math.min(.05,(now-lt)/1000);lt=now;rot=Math.max(0,rot-300*dt);plate.setAttribute('transform','rotate('+rot+')');
+        if(rot>0)raf=requestAnimationFrame(back);else{returning=false;if(ok)register(d2)}
+      })(lt);
+    }
+    svg.addEventListener('pointerup',release);svg.addEventListener('pointercancel',release);
+    function register(d2){
+      if(d2===tg[typed.length]){
+        typed.push(d2);show();say(msg,'');
+        if(typed.length===tg.length){say(msg,'Connected. Please hold.');done()}
+      }else{say(msg,'That was a '+d2+'. Not the right one.',true);shake(disp)}
+    }
+    show();
+    return{stop:function(){cancelAnimationFrame(raf)}};
+  }
+
+  /* =============== 4. PHONE NUMBER: lock in the right digit as it flickers by =============== */
+  function L_gen(box,done){
+    var tg=digits(7),pos=0,period=650,cur=0,timer=0,PRE=[3,4];
+    head(box,'Phone number, finally','Hit LOCK when the big digit matches the highlighted one. Lock the wrong digit and you start over. It gets faster.');
+    var slots=$('div','slots'),big=$('div','big','0'),msg=$('p','msg'),row=$('div','center'),btn=$('button','btn hot lockbtn','LOCK');
+    btn.type='button';row.appendChild(btn);box.appendChild(slots);box.appendChild(big);box.appendChild(row);box.appendChild(msg);
+    var els=[];
+    slots.appendChild($('span','pre','+971 58'));
+    tg.forEach(function(dg,i){if(i===3)slots.appendChild($('span','sp'));var b=$('b','',String(dg));slots.appendChild(b);els.push(b)});
+    function paint(){els.forEach(function(b,i){b.className=i<pos?'lock':i===pos?'cur':''})}
+    function next(){var n;do{n=ri(10)}while(n===cur);cur=n;big.textContent=cur;timer=setTimeout(next,period)}
+    function lock(){
+      if(cur===tg[pos]){
+        pos++;period=Math.max(260,period-60);paint();say(msg,'');
+        if(pos===tg.length){clearTimeout(timer);say(msg,'Number locked. You are very patient.');done()}
+      }else{pos=0;period=650;paint();say(msg,'Wrong digit. Back to the start.',true);shake(slots)}
+    }
+    btn.addEventListener('click',lock);
+    function key(e){if(e.key===' '){e.preventDefault();lock()}}
+    addEventListener('keydown',key);
+    paint();next();
+    return{stop:function(){clearTimeout(timer);removeEventListener('keydown',key)}};
+  }
+
+  /* =============== 5. CAPTCHA: the checkbox runs away =============== */
+  function L_captcha(box,done){
+    head(box,'Prove you are human','Tick the box. It is shy. Corner it.');
+    var area=$('div','cap'),f=$('div','flee'),cb=$('i'),msg=$('p','msg');
+    f.appendChild(cb);f.appendChild($('span','','I am not a robot'));area.appendChild(f);box.appendChild(area);box.appendChild(msg);
+    var aw=0,ah=0,fw=0,fh=0,p={x:60,y:60},q=null,raf=0,last=performance.now(),won=false;
+    function size(){aw=area.clientWidth;ah=area.clientHeight;fw=f.offsetWidth;fh=f.offsetHeight;p.x=clamp(p.x,0,aw-fw);p.y=clamp(p.y,0,ah-fh)}
+    area.addEventListener('pointermove',function(e){var r=area.getBoundingClientRect();q={x:e.clientX-r.left,y:e.clientY-r.top}});
+    area.addEventListener('pointerleave',function(){q=null});
+    f.addEventListener('click',function(){
+      if(won)return;won=true;cb.textContent='✓';say(msg,'Verified. We are not sure how.');done();
+    });
+    function tick(now){
+      var dt=Math.min(.033,(now-last)/1000);last=now;
+      if(q&&!won){
+        var cx=p.x+fw/2,cy=p.y+fh/2,dx=cx-q.x,dy=cy-q.y,d=Math.hypot(dx,dy)||1;
+        if(d<170){var s=(1-d/170)*620+120;p.x=clamp(p.x+dx/d*s*dt,0,aw-fw);p.y=clamp(p.y+dy/d*s*dt,0,ah-fh)}
+      }
+      f.style.transform='translate('+p.x+'px,'+p.y+'px)';raf=requestAnimationFrame(tick);
+    }
+    size();addEventListener('resize',size);raf=requestAnimationFrame(tick);
+    return{stop:function(){cancelAnimationFrame(raf);removeEventListener('resize',size)}};
+  }
+
+  /* =============== 6. TERMS: a very small window onto a very long document =============== */
+  function L_terms(box,done){
+    head(box,'Terms and conditions','Read them all. We will know.');
+    var pct=$('p','msg','0.0% read'),tb=$('div','terms'),btn=$('button','btn hot','I have read none of this'),row=$('div','center'),msg=$('p','msg');
+    var subj=['The Undersigned','The User','Greg','The aforementioned party','Your future self','The nearest pigeon'],
+        verb=['shall not','is hereby encouraged to','must at all times','may occasionally','agrees to never','is legally unable to'],
+        obj=['look directly at the Terms','blink more than twice per clause','mention the Terms to a houseplant','refer to this page as a "page"','forget what a clause is','hold their breath during Section ','pay any attention to subsection '];
+    for(var i=1;i<=160;i++){
+      var line=$('p','',(i)+'. '+subj[ri(6)]+' '+verb[ri(6)]+' '+(function(){var o=obj[ri(7)];return o.slice(-1)===' '?o+(ri(90)+1)+'.'+(ri(9)+1):o})()+'.');
+      tb.appendChild(line);
+    }
+    tb.appendChild($('p','','161. By scrolling this far you also agree to give us your leftover pizza.'));
+    tb.appendChild($('p','','162. This is the last clause. Thank you for your attention.'));
+    box.appendChild(pct);box.appendChild(tb);row.appendChild(btn);box.appendChild(row);box.appendChild(msg);
+    btn.disabled=true;btn.style.marginTop='12px';
+    function atEnd(){return tb.scrollTop+tb.clientHeight>=tb.scrollHeight-2}
+    function upd(){
+      var m=tb.scrollHeight-tb.clientHeight,v=m>0?tb.scrollTop/m*100:100;
+      pct.textContent=(atEnd()?'100.0':v.toFixed(1))+'% read';btn.disabled=!atEnd();
+    }
+    tb.addEventListener('wheel',function(e){e.preventDefault();var d=e.deltaMode===1?e.deltaY*16:e.deltaY;tb.scrollTop+=d*.3;upd()},{passive:false});
+    tb.addEventListener('scroll',upd);
+    btn.addEventListener('click',function(){say(msg,'Terms accepted. You have no rights now.');done()});
+    return{stop:function(){}};
+  }
+
+  /* =============== flow =============== */
+  var levels=[
+    {t:'Username',f:L_fan},{t:'Phone number',f:L_list},{t:'Phone number, old school',f:L_rotary},
+    {t:'Phone number, finally',f:L_gen},{t:'Captcha',f:L_captcha},{t:'Terms',f:L_terms}
+  ],idx=0,cur=null,started=0,skipT=0,S={name:'',times:[],skipped:0,begin:0};
+  levels.forEach(function(){pips.appendChild(document.createElement('i'))});
+
+  function paintProg(){
+    [].forEach.call(pips.children,function(p,i){p.className=i<idx?'done':i===idx?'on':''});
+    plabel.textContent=idx<levels.length?'Level '+(idx+1)+' of '+levels.length+' · '+levels[idx].t:'Complete';
+  }
+  function go(i){
+    if(cur&&cur.stop)cur.stop();cur=null;clearTimeout(skipT);skipBtn.classList.remove('show');
+    body.innerHTML='';stage.classList.remove('ok');idx=i;paintProg();
+    if(i>=levels.length){finish();return}
+    started=performance.now();
+    cur=levels[i].f(body,function(v){
+      if(v&&i===0)S.name=v;
+      S.times.push((performance.now()-started)/1000);
+      stage.classList.add('ok');clearTimeout(skipT);skipBtn.classList.remove('show');
+      setTimeout(function(){go(i+1)},900);
+    });
+    skipT=setTimeout(function(){skipBtn.classList.add('show')},45000);
+  }
+  skipBtn.addEventListener('click',function(){S.skipped++;S.times.push(0);go(idx+1)});
+
+  function finish(){
+    var total=(performance.now()-S.begin)/1000,m=Math.floor(total/60),s=Math.round(total%60);
+    var d=$('div','fin');
+    d.innerHTML='<div class="tick">🎉</div><h2>Account created.</h2><p class="hint">You now own an account that does not exist. Nothing you did here was saved or sent anywhere.</p>'
+      +'<ul><li><span>Username</span><span>'+(S.name?S.name:'(skipped)')+'</span></li><li><span>Total time</span><span>'+m+'m '+s+'s</span></li><li><span>Levels skipped</span><span>'+S.skipped+'</span></li></ul>';
+    var row=$('div','row'),again=$('button','btn hot','Suffer again'),home=$('a','btn','Back home');
+    again.type='button';home.href='/';home.style.textDecoration='none';
+    again.addEventListener('click',function(){S={name:'',times:[],skipped:0,begin:performance.now()};go(0)});
+    row.appendChild(again);row.appendChild(home);d.appendChild(row);body.appendChild(d);
+  }
+  S.begin=performance.now();go(0);
+})();
+</script>
+</body>
+</html>
