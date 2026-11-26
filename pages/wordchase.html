@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Word chase · greg</title>
+<link rel="icon" type="image/png" href="/images/favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0705;--ink:#fff4e8;--muted:#b9a08c;--red:#ff3d1f;--orange:#ff6b00;--yellow:#ffb703;
+  --g-bg:rgba(255,100,20,.08);--g-bd:rgba(255,150,60,.35);--font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-tap-highlight-color:transparent}
+#cv{position:fixed;left:0;top:0;width:100vw;height:100vh;display:block}
+.back{position:absolute;top:24px;left:clamp(16px,4vw,36px);color:var(--muted);text-decoration:none;z-index:5}
+.back:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
+.glass{background:var(--g-bg);border:1px solid var(--g-bd);box-shadow:0 0 40px rgba(255,80,0,.14),inset 0 1px 0 rgba(255,220,180,.16);
+  -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%)}
+
+/* HUD */
+#hud{position:fixed;top:16px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;z-index:4}
+.needbox{text-align:center}
+.needbox small{display:block;color:var(--muted);font-size:.85rem;letter-spacing:.02em}
+#need{display:block;font-size:clamp(3rem,10vw,5.2rem);font-weight:700;line-height:1;color:var(--yellow);
+  text-shadow:0 0 28px rgba(255,140,0,.6)}
+#need.pop{animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(1.6)}}
+#stats{position:fixed;top:20px;right:clamp(16px,4vw,36px);text-align:right;color:var(--muted);font-size:.9rem;line-height:1.5;z-index:4}
+#stats b{color:var(--ink);font-size:1.15rem}
+#chain{position:fixed;top:calc(16px + clamp(3rem,10vw,5.2rem) + 30px);left:0;right:0;text-align:center;color:var(--muted);
+  font-size:.95rem;white-space:nowrap;overflow:hidden;padding:0 20px;pointer-events:none;z-index:4;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 25%);mask:linear-gradient(90deg,transparent,#000 25%)}
+#chain span:last-child{color:var(--ink)}
+
+/* input dock: kept above the phone keyboard via --kb */
+#dock{position:fixed;left:0;right:0;bottom:calc(var(--kb,0px) + clamp(18px,5vh,48px));display:flex;flex-direction:column;align-items:center;gap:8px;z-index:6;padding:0 16px}
+form{display:flex;gap:8px;width:min(440px,100%);padding:6px;border-radius:99px}
+#word{flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:500 16px var(--font);font-size:max(16px,1.15rem);padding:10px 16px;outline:none;text-transform:lowercase}
+#word::placeholder{color:rgba(255,220,190,.4)}
+#word:disabled{opacity:.5}
+form button,.btn{border:0;border-radius:99px;padding:10px 20px;font:700 1rem var(--font);color:#1a0b04;cursor:pointer;
+  background:linear-gradient(100deg,var(--yellow),var(--orange))}
+form:focus-within{border-color:rgba(255,183,3,.75)}
+form.shake{animation:shake .38s}
+#word.shake{}
+@keyframes shake{20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(3px)}}
+#reason{min-height:1.3em;font-size:.95rem;color:#ff8a6a;text-align:center}
+#reason.good{color:var(--yellow)}
+#status{font-size:.95rem;color:var(--muted);text-align:center;min-height:1.3em}
+#retry{display:none}
+#retry.show{display:inline-block}
+
+/* game over */
+#over{position:fixed;inset:0;z-index:10;display:none;place-items:center;background:rgba(8,3,2,.72)}
+#over.show{display:grid;animation:fin .4s ease}
+@keyframes fin{from{opacity:0}}
+.card{width:min(420px,calc(100vw - 32px));border-radius:24px;padding:28px;text-align:center;background:rgba(40,14,6,.85)}
+.card h2{font-size:clamp(2.2rem,8vw,3.2rem);letter-spacing:-.04em;line-height:1;color:var(--red);text-shadow:0 0 30px rgba(255,61,31,.5)}
+.card .row{display:flex;justify-content:center;gap:28px;margin:20px 0 10px}
+.card .row div{display:flex;flex-direction:column}
+.card .row b{font-size:1.8rem}
+.card .row span{color:var(--muted);font-size:.85rem}
+.card .newbest{color:var(--yellow);font-weight:700;min-height:1.4em}
+.card .words{color:var(--muted);font-size:.9rem;margin:6px 0 20px;max-height:5.6em;overflow:auto}
+@media (prefers-reduced-motion:reduce){form.shake,#need.pop,#over.show{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="cv" aria-hidden="true"></canvas>
+<a class="back" href="/">Back home</a>
+
+<div id="hud"><div class="needbox"><small>next word starts with</small><span id="need" aria-live="polite">·</span></div></div>
+<div id="stats">words <b id="score">0</b><br>best <b id="best">0</b><br><span id="dist">0 m</span></div>
+<div id="chain" aria-hidden="true"></div>
+
+<div id="dock">
+  <div id="status" role="status">loading words…</div>
+  <button class="btn" id="retry" type="button">Retry</button>
+  <form id="f" class="glass" autocomplete="off">
+    <input id="word" type="text" aria-label="Your word" placeholder="type a word…" disabled
+      autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="40">
+    <button type="submit">Go</button>
+  </form>
+  <div id="reason" aria-live="polite"></div>
+</div>
+
+<div id="over" role="dialog" aria-labelledby="overT">
+  <div class="card glass">
+    <h2 id="overT">Caught.</h2>
+    <div class="row"><div><b id="oWords">0</b><span>words</span></div><div><b id="oDist">0</b><span>metres</span></div><div><b id="oBest">0</b><span>best</span></div></div>
+    <div class="newbest" id="oNew"></div>
+    <div class="words" id="oChain"></div>
+    <button class="btn" id="again" type="button">Run again</button>
+  </div>
+</div>
+
+<script src="wordchase-logic.js"></script>
+<script>
+(function(){
+  var W = window.WordChase;
+  var $ = function(id){return document.getElementById(id)};
+  var cv=$('cv'), ctx=cv.getContext('2d'), input=$('word'), form=$('f');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // tuning (world units are px at zoom 1)
+  var STEP=28, START_GAP=260, CHASE_V0=22, CHASE_DV=1.2, CHASE_DT=5, CATCH=18;
+
+  var dict=null, best=0;
+  try{best=+localStorage.getItem('wordchase-best')||0}catch(e){}
+
+  // live game state; exposed for the smoke test
+  var G = window.__wc = {state:'loading', run:null, runnerX:0, chaserX:-START_GAP, t:0, tiles:[], queue:[], phase:0, moving:false};
+  var particles=[];
+
+  /* ---------- word list ---------- */
+  function load(){
+    G.state='loading'; setStatus('loading words…'); $('retry').classList.remove('show'); input.disabled=true;
+    fetch('words.txt').then(function(r){ if(!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function(txt){ dict=W.parseWords(txt); reset(); })
+      .catch(function(){ G.state='error'; setStatus("couldn't load the dictionary"); $('retry').classList.add('show'); });
+  }
+  $('retry').addEventListener('click', load);
+
+  /* ---------- run lifecycle ---------- */
+  function reset(letter){
+    G.run=W.newRun(letter||W.randomStartLetter());
+    G.runnerX=0; G.chaserX=-START_GAP; G.t=0; G.tiles=[]; G.queue=[]; G.phase=0; particles=[];
+    G.state='ready';
+    $('over').classList.remove('show');
+    input.disabled=false; input.value=''; setReason('');
+    setStatus('type a word to start running');
+    hud(); input.focus();
+  }
+  window.__wcSetNeed=function(l){ reset(l); };
+
+  function hud(){
+    var n=$('need'); n.textContent=G.run.need.toUpperCase();
+    n.classList.remove('pop'); void n.offsetWidth; n.classList.add('pop');
+    $('score').textContent=G.run.words.length;
+    $('best').textContent=best;
+    $('dist').textContent=G.run.steps+' m';
+    input.placeholder=G.run.need+'…';
+    var c=$('chain'); c.innerHTML='';
+    G.run.words.slice(-8).forEach(function(w,i,a){ var s=document.createElement('span'); s.textContent=w+(i<a.length-1?' → ':''); c.appendChild(s); });
+  }
+
+  function start(){ if(G.state==='ready'){ G.state='playing'; setStatus(''); } }
+  input.addEventListener('input', function(){ if(G.state==='ready') start(); else if(G.state==='paused') resume(); });
+
+  var MSG={short:'too short', notword:'not a word', used:'already used'};
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(G.state==='paused') resume();
+    if(G.state!=='playing' && G.state!=='ready') return;
+    start();
+    var c=W.checkWord(G.run, input.value, dict);
+    if(!c.ok){
+      setReason(c.reason==='letter' ? 'must start with '+G.run.need.toUpperCase() : MSG[c.reason]);
+      shake(); return;
+    }
+    var from=G.run.steps;
+    W.applyWord(G.run, c.word);
+    for(var i=0;i<c.word.length;i++) G.queue.push({i:from+i, ch:c.word[i]});
+    input.value=''; setReason('+'+c.word.length+' steps', true);
+    hud();
+  });
+
+  function shake(){
+    form.classList.remove('shake'); input.classList.remove('shake'); void form.offsetWidth;
+    form.classList.add('shake'); input.classList.add('shake');
+    clearTimeout(shake.t); shake.t=setTimeout(function(){form.classList.remove('shake');input.classList.remove('shake')},450);
+  }
+  function setReason(t,good){ var r=$('reason'); r.textContent=t; r.classList.toggle('good',!!good); }
+  function setStatus(t){ $('status').textContent=t; }
+
+  function gameOver(){
+    G.state='over'; input.disabled=true; input.blur();
+    var n=G.run.words.length, nb=n>best;
+    if(nb){ best=n; try{localStorage.setItem('wordchase-best',String(best))}catch(e){} }
+    $('oWords').textContent=n; $('oDist').textContent=G.run.steps; $('oBest').textContent=best;
+    $('oNew').textContent=nb?'new best!':'';
+    $('oChain').textContent=n?G.run.words.join(' → '):'no words this time';
+    $('best').textContent=best;
+    $('over').classList.add('show'); $('again').focus();
+  }
+  $('again').addEventListener('click', function(){ reset(); });
+
+  /* ---------- pause when you leave ---------- */
+  function pause(){ if(G.state==='playing'){ G.state='paused'; setStatus('paused · click or type to resume'); } }
+  function resume(){ if(G.state==='paused'){ G.state='playing'; setStatus(''); last=performance.now(); } }
+  document.addEventListener('visibilitychange', function(){ if(document.hidden) pause(); });
+  window.addEventListener('blur', pause);
+  document.addEventListener('pointerdown', function(){ resume(); });
+  input.addEventListener('focus', resume);
+  document.addEventListener('keydown', function(e){
+    if(G.state==='paused') resume();
+    if(G.state==='over' && e.key==='Enter' && document.activeElement!==$('again')){ e.preventDefault(); reset(); }
+  });
+
+  /* ---------- keep the input above the phone keyboard ---------- */
+  if(window.visualViewport){
+    var vv=window.visualViewport, kb=function(){
+      var k=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--kb', k+'px');
+    };
+    vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb);
+  }
+
+  /* ---------- canvas ---------- */
+  var Wd=0, Ht=0, dpr=1, zoom=1;
+  function size(){
+    dpr=Math.min(2, window.devicePixelRatio||1); Wd=window.innerWidth; Ht=window.innerHeight;
+    cv.width=Math.round(Wd*dpr); cv.height=Math.round(Ht*dpr);
+    zoom=Math.max(.55, Math.min(1, Wd/1000));
+  }
+  window.addEventListener('resize', size); size();
+
+  var last=performance.now();
+  function frame(now){
+    var dt=Math.min(.05,(now-last)/1000); last=now;
+    update(dt); draw(now/1000);
+    requestAnimationFrame(frame);
+  }
+
+  function update(dt){
+    if(G.state!=='playing') { G.moving=false; return; }
+    G.t+=dt;
+    // runner eases toward where the steps put it
+    var target=G.run.steps*STEP, d=target-G.runnerX;
+    if(d>0.5){
+      var v=Math.max(220, d*5), mv=Math.min(d, v*dt);
+      G.runnerX+=mv; G.phase+=mv*0.11; G.moving=true;
+      if(!reduce && Math.random()<0.6) particles.push({x:G.runnerX-6,y:0,vx:-40-Math.random()*60,vy:-30-Math.random()*50,life:.5});
+    } else { G.runnerX=Math.max(G.runnerX,target); G.moving=false; }
+    // lay tiles as the runner reaches them
+    while(G.queue.length && G.queue[0].i*STEP <= G.runnerX+2){ var q=G.queue.shift(); q.born=G.t; G.tiles.push(q); }
+    // chaser: steady, slowly faster
+    var v2=CHASE_V0 + CHASE_DV*Math.floor(G.t/CHASE_DT);
+    G.chaserX+=v2*dt;
+    particles.forEach(function(p){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=160*dt; p.life-=dt; });
+    particles=particles.filter(function(p){return p.life>0});
+    if(G.chaserX >= G.runnerX - CATCH) gameOver();
+  }
+
+  function draw(t){
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    // sky
+    var g=ctx.createLinearGradient(0,0,0,Ht); g.addColorStop(0,'#160a06'); g.addColorStop(.7,'#0c0705'); g.addColorStop(1,'#070302');
+    ctx.fillStyle=g; ctx.fillRect(0,0,Wd,Ht);
+    var GY=Math.round(Ht*0.62);
+    var camX=G.runnerX - (Wd*0.62)/zoom;
+    var sx=function(wx){return (wx-camX)*zoom};
+
+    // far embers (parallax)
+    ctx.fillStyle='rgba(255,140,40,.35)';
+    for(var i=0;i<40;i++){
+      var px=((i*137.5 - camX*0.25*zoom) % (Wd+40) + Wd+40) % (Wd+40) - 20;
+      var py=(i*61)%Math.max(1,GY-60)+20 + Math.sin(t*.7+i)*4;
+      ctx.globalAlpha=.25+.25*Math.sin(t*1.3+i*2.1); ctx.fillRect(px,py,2,2);
+    }
+    ctx.globalAlpha=1;
+    // far hills
+    ctx.fillStyle='#1a0c07';
+    ctx.beginPath(); ctx.moveTo(0,GY);
+    for(var x=0;x<=Wd+20;x+=20){ var wx=x/zoom*0.5+camX*0.5; ctx.lineTo(x, GY-40-28*Math.sin(wx*0.004)-14*Math.sin(wx*0.011)); }
+    ctx.lineTo(Wd,GY); ctx.fill();
+
+    // danger glow from the left when it's close
+    var gap=G.runnerX-G.chaserX, danger=Math.max(0,Math.min(1,1-(gap-CATCH)/160));
+    if(danger>0 && G.state!=='loading'){
+      var dg=ctx.createLinearGradient(0,0,Wd*.5,0); dg.addColorStop(0,'rgba(255,30,10,'+(.35*danger)+')'); dg.addColorStop(1,'rgba(255,30,10,0)');
+      ctx.fillStyle=dg; ctx.fillRect(0,0,Wd,Ht);
+    }
+
+    // ground
+    ctx.fillStyle='#120805'; ctx.fillRect(0,GY,Wd,Ht-GY);
+    ctx.strokeStyle='rgba(255,150,60,.35)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,GY+.5); ctx.lineTo(Wd,GY+.5); ctx.stroke();
+
+    // letter tiles
+    var tw=STEP*zoom, from=Math.floor(camX/STEP)-1, to=from+Math.ceil(Wd/tw)+2;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='700 '+Math.round(15*zoom+3)+'px "Space Grotesk",sans-serif';
+    G.tiles.forEach(function(tl){
+      if(tl.i<from||tl.i>to) return;
+      var age=reduce?1:Math.min(1,(G.t-tl.born)/.25), x0=sx(tl.i*STEP)+1.5, w=tw-3, h=tw*0.82;
+      var y0=GY+(1-age)*12;
+      ctx.save(); ctx.globalAlpha=age;
+      ctx.shadowColor='rgba(255,120,0,.8)'; ctx.shadowBlur=12*zoom;
+      var tg=ctx.createLinearGradient(0,y0,0,y0+h); tg.addColorStop(0,'#ffb703'); tg.addColorStop(1,'#ff5a00');
+      ctx.fillStyle=tg; roundRect(x0,y0,w,h,4*zoom); ctx.fill();
+      ctx.shadowBlur=0; ctx.fillStyle='#2a1004'; ctx.fillText(tl.ch.toUpperCase(), x0+w/2, y0+h/2+1);
+      ctx.restore();
+    });
+
+    // dust
+    particles.forEach(function(p){ ctx.globalAlpha=Math.max(0,p.life*1.6); ctx.fillStyle='#ffb070'; ctx.fillRect(sx(p.x),GY+p.y*zoom-2,2.5,2.5); });
+    ctx.globalAlpha=1;
+
+    drawChaser(sx(G.chaserX), GY, t);
+    drawRunner(sx(G.runnerX), GY, t);
+
+    // chaser off-screen arrow
+    var cx=sx(G.chaserX);
+    if(cx < -10 && G.state!=='loading'){
+      ctx.fillStyle='rgba(255,90,60,.9)'; ctx.font='600 14px "Space Grotesk",sans-serif'; ctx.textAlign='left';
+      ctx.fillText('◀ '+Math.round(gap/STEP)+' m', 14, GY-60);
+    }
+  }
+
+  function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  // the runner: a little ember-headed sprinter
+  function drawRunner(x,gy,t){
+    var s=zoom, ph=G.phase, mv=G.moving||G.state==='playing';
+    var sw=G.moving?Math.sin(ph):Math.sin(t*3)*.15, bob=G.moving?Math.abs(Math.cos(ph))*3*s:Math.sin(t*2)*1.2*s;
+    var hip={x:x, y:gy-24*s-bob}, neck={x:x+4*s, y:hip.y-20*s};
+    ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.shadowColor='rgba(255,170,60,.7)'; ctx.shadowBlur=10*s;
+    ctx.strokeStyle='#fff4e8'; ctx.lineWidth=4.5*s;
+    function limb(o,a1,l1,a2,l2){ var k={x:o.x+Math.sin(a1)*l1,y:o.y+Math.cos(a1)*l1}; ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(k.x,k.y); ctx.lineTo(k.x+Math.sin(a2)*l2,k.y+Math.cos(a2)*l2); ctx.stroke(); }
+    // back leg/arm dimmer
+    ctx.globalAlpha=.55;
+    limb(hip, -sw*.9, 12*s, -sw*.9 - (sw>0?.9:0) , 12*s);
+    limb({x:neck.x-1*s,y:neck.y+3*s}, sw*1.1, 10*s, sw*1.1-1.3, 9*s);
+    ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.moveTo(hip.x,hip.y); ctx.lineTo(neck.x,neck.y); ctx.stroke();
+    limb(hip, sw*.9, 12*s, sw*.9 - (sw<0?.9:0), 12*s);
+    limb({x:neck.x-1*s,y:neck.y+3*s}, -sw*1.1, 10*s, -sw*1.1-1.3, 9*s);
+    // head: a glowing ember
+    var hg=ctx.createRadialGradient(neck.x+3*s,neck.y-11*s,1,neck.x+3*s,neck.y-9*s,9*s);
+    hg.addColorStop(0,'#fff2c0'); hg.addColorStop(.5,'#ffb703'); hg.addColorStop(1,'#ff5a00');
+    ctx.fillStyle=hg; ctx.shadowBlur=18*s; ctx.beginPath(); ctx.arc(neck.x+3*s,neck.y-9*s,8*s,0,7); ctx.fill();
+    ctx.restore();
+  }
+
+  // the chaser: the Murk, a smoky blob with too many eyes
+  function drawChaser(x,gy,t){
+    var s=zoom*1.1, cx=x-34*s, cy=gy-38*s, near=G.state==='playing'?1:.6;
+    ctx.save();
+    // smoke tail
+    for(var i=0;i<7;i++){
+      var a=t*1.7+i*.9;
+      ctx.fillStyle='rgba(40,8,24,'+(.35-i*.04)+')';
+      ctx.beginPath(); ctx.arc(cx-(16+i*13)*s, cy+Math.sin(a)*6*s-i*2*s, (24-i*2.4)*s, 0, 7); ctx.fill();
+    }
+    // body
+    ctx.shadowColor='rgba(255,30,60,.55)'; ctx.shadowBlur=26*s;
+    ctx.fillStyle='#1b0614';
+    ctx.beginPath();
+    for(var k=0;k<=24;k++){
+      var ang=k/24*Math.PI*2, r=(34+4*Math.sin(ang*5+t*6)+3*Math.sin(ang*3-t*4))*s;
+      var px=cx+Math.cos(ang)*r*1.05, py=cy+Math.sin(ang)*r*.95;
+      if(py>gy) py=gy;
+      k?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.closePath(); ctx.fill();
+    // grasping tendrils toward the runner
+    ctx.shadowBlur=0; ctx.strokeStyle='#1b0614'; ctx.lineCap='round';
+    for(var j=0;j<3;j++){
+      var reach=(18+10*Math.sin(t*5+j*2))*s*near;
+      ctx.lineWidth=(7-j*1.5)*s;
+      ctx.beginPath(); ctx.moveTo(cx+24*s, cy-6*s+j*12*s);
+      ctx.quadraticCurveTo(cx+(34)*s+reach*.5, cy-14*s+j*12*s+Math.sin(t*7+j)*5*s, cx+30*s+reach, cy-4*s+j*10*s);
+      ctx.stroke();
+    }
+    // eyes
+    var eyes=[[10,-10,5],[22,-4,4],[2,2,3.2],[16,8,2.6],[-6,-14,2.6]];
+    eyes.forEach(function(e,n){
+      var blink=(Math.sin(t*1.3+n*1.7)>.97)?.15:1;
+      ctx.fillStyle='#ff3d1f'; ctx.shadowColor='#ff3d1f'; ctx.shadowBlur=12*s;
+      ctx.beginPath(); ctx.ellipse(cx+e[0]*s, cy+e[1]*s, e[2]*s, e[2]*s*blink, 0, 0, 7); ctx.fill();
+      ctx.shadowBlur=0; ctx.fillStyle='#ffe0a0';
+      ctx.beginPath(); ctx.arc(cx+e[0]*s+e[2]*.35*s, cy+e[1]*s, e[2]*.35*s*blink, 0, 7); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  requestAnimationFrame(frame);
+  load();
+})();
+</script>
+</body>
+</html>
