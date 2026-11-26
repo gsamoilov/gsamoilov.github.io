@@ -17,7 +17,7 @@ the home page alongside the lava lamp, ball pit, etc.
 - Word is submitted with Enter and checked against a real dictionary.
 - Rejected words (not a word / wrong first letter / already used) shake the input and
   cost nothing but time.
-- The chaser advances at a steady pace that slowly speeds up; caught = game over.
+- The chaser speeds up over time, and runs faster the further ahead you are (rubber-band); caught = game over.
 - Score = words chained (distance shown too). Best score saved in localStorage.
 - Starting letter is never one with almost no follow-ups (e.g. not X); if a word ends
   in a letter that's hard to continue, that's part of the game.
@@ -33,7 +33,7 @@ the home page alongside the lava lamp, ball pit, etc.
 - One self-contained page `pages/wordchase.html` (inline CSS/JS, same as the other
   fun pages), plus a "Back home" link and a card in the home page's Experiments grid.
 - Dictionary: ENABLE word list (public domain, 172,823 words, ~1.7 MB raw / ~450 KB
-  gzipped by GitHub Pages) committed as `pages/words.txt`, loaded once into a `Set`.
+  gzipped by GitHub Pages) committed as `pages/wordchase/words.txt`, loaded once into a `Set`.
   No external API at play time.
 - Canvas side view: ground line, character on the right-of-centre, chaser on the left;
   camera follows the character. Letter tiles land as stepping stones under the runner.

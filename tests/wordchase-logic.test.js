@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const W = require('../pages/wordchase-logic.js');
+const W = require('../pages/wordchase/wordchase-logic.js');
 
 const dict = W.parseWords('zoo\norb\r\nbreak\n\nKey\n');
 
@@ -51,7 +51,25 @@ test('start letters', () => {
 });
 
 test('real list sanity', () => {
-  const big = W.parseWords(fs.readFileSync(path.join(__dirname, '..', 'pages', 'words.txt'), 'utf8'));
+  const big = W.parseWords(fs.readFileSync(path.join(__dirname, '..', 'pages', 'wordchase', 'words.txt'), 'utf8'));
   assert.equal(big.size, 172823);
   for (const w of ['zoo', 'orb', 'break']) assert.ok(big.has(w));
+});
+
+test('chaser speeds up over time', () => {
+  assert.ok(W.chaserSpeed(60, 260) > W.chaserSpeed(0, 260));
+  assert.ok(W.chaserSpeed(120, 260) > W.chaserSpeed(60, 260));
+});
+
+test('chaser is faster the further ahead you are', () => {
+  assert.ok(W.chaserSpeed(0, 600) > W.chaserSpeed(0, 260));
+  assert.ok(W.chaserSpeed(0, 260) > W.chaserSpeed(0, 40));
+});
+
+test('chaser speed values', () => {
+  assert.equal(W.chaserSpeed(0, 0), 16);
+  assert.equal(W.chaserSpeed(0, 260), 29);   // start of a run: about the old pace
+  assert.equal(W.chaserSpeed(0, -50), 16);   // never slower than the base
+  assert.equal(W.chaserSpeed(4.9, 0), 16);   // time bumps come every 5 s
+  assert.equal(W.chaserSpeed(5, 0), 17);
 });

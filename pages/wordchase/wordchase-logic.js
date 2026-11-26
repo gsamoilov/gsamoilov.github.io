@@ -41,7 +41,14 @@
     return word.length;
   }
 
-  var api = { START_LETTERS: START_LETTERS, parseWords: parseWords, randomStartLetter: randomStartLetter,
+  // Chaser speed in px/s (one step = 28 px). A base that creeps up every 5 s,
+  // plus a pull that grows with the gap: the further ahead you get, the harder it runs.
+  var CHASE_BASE = 16, CHASE_PER_5S = 1, CHASE_PULL = 0.05;
+  function chaserSpeed(t, gap) {
+    return CHASE_BASE + CHASE_PER_5S * Math.floor(t / 5) + CHASE_PULL * Math.max(0, gap);
+  }
+
+  var api = { chaserSpeed: chaserSpeed, START_LETTERS: START_LETTERS, parseWords: parseWords, randomStartLetter: randomStartLetter,
     newRun: newRun, normalize: normalize, checkWord: checkWord, applyWord: applyWord };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.WordChase = api;
