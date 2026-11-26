@@ -178,7 +178,7 @@ form.shake{animation:shake .38s}
   function setStatus(t){ $('status').textContent=t; }
 
   function gameOver(){
-    G.state='over'; input.disabled=true; input.blur();
+    G.state='over'; overAt=performance.now(); input.disabled=true; input.blur();
     var n=G.run.words.length, nb=n>best;
     if(nb){ best=n; try{localStorage.setItem('wordchase-best',String(best))}catch(e){} }
     $('oWords').textContent=n; $('oDist').textContent=G.run.steps; $('oBest').textContent=best;
@@ -187,18 +187,26 @@ form.shake{animation:shake .38s}
     $('best').textContent=best;
     $('over').classList.add('show'); $('again').focus();
   }
-  $('again').addEventListener('click', function(){ reset(); });
+  // a stray Enter from the word you were typing must not skip the result card
+  var overAt=0;
+  function again(){ if(performance.now()-overAt>=700) reset(); }
+  $('again').addEventListener('click', again);
 
   /* ---------- pause when you leave ---------- */
   function pause(){ if(G.state==='playing'){ G.state='paused'; setStatus('paused · click or type to resume'); } }
   function resume(){ if(G.state==='paused'){ G.state='playing'; setStatus(''); last=performance.now(); } }
   document.addEventListener('visibilitychange', function(){ if(document.hidden) pause(); });
   window.addEventListener('blur', pause);
-  document.addEventListener('pointerdown', function(){ resume(); });
+  // clicks/taps on the scene keep the cursor in the word box, so typing never goes nowhere
+  function playable(){ return G.state==='playing'||G.state==='paused'||G.state==='ready'; }
+  function onScene(e){ return !(e.target.closest && e.target.closest('a,button,input')); }
+  document.addEventListener('pointerdown', function(e){ resume(); if(playable() && onScene(e)){ e.preventDefault(); input.focus(); } });
+  document.addEventListener('mousedown', function(e){ if(playable() && onScene(e)) e.preventDefault(); });
   input.addEventListener('focus', resume);
   document.addEventListener('keydown', function(e){
     if(G.state==='paused') resume();
-    if(G.state==='over' && e.key==='Enter' && document.activeElement!==$('again')){ e.preventDefault(); reset(); }
+    if(playable() && e.target!==input && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key.length===1 || e.key==='Enter') && onScene(e)) input.focus();
+    if(G.state==='over' && e.key==='Enter' && document.activeElement!==$('again')){ e.preventDefault(); again(); }
   });
 
   /* ---------- keep the input above the phone keyboard ---------- */
@@ -206,6 +214,7 @@ form.shake{animation:shake .38s}
     var vv=window.visualViewport, kb=function(){
       var k=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
       document.documentElement.style.setProperty('--kb', k+'px');
+      size();
     };
     vv.addEventListener('resize', kb); vv.addEventListener('scroll', kb);
   }
@@ -213,8 +222,13 @@ form.shake{animation:shake .38s}
   /* ---------- canvas ---------- */
   var Wd=0, Ht=0, dpr=1, zoom=1;
   function size(){
-    dpr=Math.min(2, window.devicePixelRatio||1); Wd=window.innerWidth; Ht=window.innerHeight;
-    cv.width=Math.round(Wd*dpr); cv.height=Math.round(Ht*dpr);
+    // iOS shrinks only the visual viewport when the keyboard opens, so size to that
+    var vv=window.visualViewport;
+    dpr=Math.min(2, window.devicePixelRatio||1); Wd=window.innerWidth; Ht=vv?Math.min(window.innerHeight, vv.height):window.innerHeight;
+    cv.width=Math.round(Wd*dpr); cv.height=Math.round(Ht*dpr); cv.style.height=Ht+'px';
+    // ground sits well above the word box so you can always see the chase
+    var dockTop=form.getBoundingClientRect().top;
+    G.groundY=Math.round(Math.min(Ht*0.62, dockTop-70));
     zoom=Math.max(.55, Math.min(1, Wd/1000));
   }
   window.addEventListener('resize', size); size();
@@ -251,7 +265,7 @@ form.shake{animation:shake .38s}
     // sky
     var g=ctx.createLinearGradient(0,0,0,Ht); g.addColorStop(0,'#160a06'); g.addColorStop(.7,'#0c0705'); g.addColorStop(1,'#070302');
     ctx.fillStyle=g; ctx.fillRect(0,0,Wd,Ht);
-    var GY=Math.round(Ht*0.62);
+    var GY=G.groundY;
     var camX=G.runnerX - (Wd*0.62)/zoom;
     var sx=function(wx){return (wx-camX)*zoom};
 

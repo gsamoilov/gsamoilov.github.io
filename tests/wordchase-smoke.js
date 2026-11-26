@@ -55,14 +55,25 @@ const SHOTS = process.env.SHOT_DIR || ROOT;
     assert.equal(await page.evaluate(() => window.__wc.state), 'playing');
     await page.screenshot({ path: path.join(SHOTS, 'wc-desktop.png') });
 
+    // fix 1: clicking the scene keeps typing working
+    await page.evaluate(() => window.__wcSetNeed('z'));
+    await page.fill('#word', 'zoo'); await page.press('#word', 'Enter');
+    await page.mouse.click(500, 250);
+    await page.keyboard.type('orb'); await page.keyboard.press('Enter');
+    assert.equal(await page.textContent('#score'), '2', 'typing after clicking the scene should still submit words');
+
     // 6. getting caught ends the run
     await page.evaluate(() => { window.__wc.chaserX = window.__wc.runnerX; });
     await page.waitForFunction(() => document.getElementById('over').classList.contains('show'), null, { timeout: 3000 });
+    // fix 2: an Enter right as you're caught must not skip the result card
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => window.__wc.state), 'over', 'Enter right after being caught skipped the game-over card');
     assert.equal(await page.evaluate(() => window.__wc.state), 'over');
-    assert.equal(await page.evaluate(() => localStorage.getItem('wordchase-best')), '3');
+    assert.equal(await page.evaluate(() => localStorage.getItem('wordchase-best')), '2');
     await page.waitForTimeout(600);
     await page.screenshot({ path: path.join(SHOTS, 'wc-over.png') });
-    // play again resets
+    // play again resets (after the short grace period)
+    await page.waitForTimeout(800);
     await page.click('#again');
     assert.equal(await page.textContent('#score'), '0');
     assert.equal(await page.evaluate(() => window.__wc.state), 'ready');
@@ -85,6 +96,15 @@ const SHOTS = process.env.SHOT_DIR || ROOT;
     await p3.goto(URL);
     await p3.waitForFunction(() => window.__wc && window.__wc.state === 'ready', null, { timeout: 15000 });
     await p3.fill('#word', 'a');
+    // fix 3: iOS-style keyboard shrinks only visualViewport; the scene must stay above the input dock
+    await p3.evaluate(() => {
+      const vv = window.visualViewport;
+      Object.defineProperty(vv, 'height', { configurable: true, get: () => 450 });
+      vv.dispatchEvent(new Event('resize'));
+    });
+    await p3.waitForTimeout(100);
+    const g = await p3.evaluate(() => ({ ground: window.__wc.groundY, dock: document.getElementById('f').getBoundingClientRect().top }));
+    assert.ok(g.ground < g.dock - 40, `ground ${g.ground} should sit above the input at ${g.dock}`);
     await p3.screenshot({ path: path.join(SHOTS, 'wc-phone.png') });
 
     console.log('SMOKE PASS');
