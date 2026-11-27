@@ -7,6 +7,7 @@ import { Home } from './pages/Home';
 import { Game } from './pages/Game';
 import { Playing, About } from './pages/Simple';
 import { Profile } from './pages/Profile';
+import { ChartPage, IgdbGamePage, SearchPage } from './pages/Browse';
 import { NotFound } from './pages/NotFound';
 import { AuthSteam } from './pages/AuthSteam';
 
@@ -19,6 +20,10 @@ function App() {
         <Router onRouteChange={() => window.scrollTo(0, 0)}>
           <Route path="/" component={Home} />
           <Route path="/game/:appid" component={Game} />
+          <Route path="/g/:id" component={IgdbGamePage} />
+          <Route path="/search" component={SearchPage} />
+          <Route path="/trending" component={() => <ChartPage kind="trending" />} />
+          <Route path="/popular" component={() => <ChartPage kind="popular" />} />
           <Route path="/playing" component={Playing} />
           <Route path="/profile" component={Profile} />
           <Route path="/about" component={About} />

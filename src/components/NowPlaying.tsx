@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useAuth } from '../lib/auth';
-import { setPlaying, usePlaying, type PlayingGame } from '../lib/playing';
+import { gameHref, setPlaying, setPlayingGame, usePlaying, type PlayingGame } from '../lib/playing';
 import { formatPlaytime, useAsync } from '../lib/useAsync';
 import { getMyStats, getRecent } from '../platform/steamClient';
 import { Poster } from './Poster';
@@ -10,29 +10,33 @@ const TAB_KEY = 'samoilov:playing-tab';
 const capsule = (appid: number | string) => `https://cdn.akamai.steamstatic.com/steam/apps/${appid}/capsule_184x69.jpg`;
 
 function PlayingCard({ g, userId }: { g: PlayingGame; userId: string }) {
-  const appid = Number(g.game_id);
-  const me = useAsync(() => getMyStats(appid, userId), [appid, userId]);
+  const isSteam = g.platform === 'steam';
+  const appid = isSteam ? Number(g.game_id) : 0;
+  const href = gameHref(g.platform, g.game_id);
+  const me = useAsync(isSteam ? () => getMyStats(appid, userId) : null, [appid, userId]);
   const stats = me.status === 'ok' ? me.data : null;
   const pct = stats && stats.achievementsTotal ? Math.round((stats.achievementsEarned / stats.achievementsTotal) * 100) : null;
   return (
     <div class="np-card">
-      <a class="np-cover" href={`/game/${appid}`} aria-hidden="true" tabIndex={-1}>
-        <Poster key={appid} appid={appid} name={g.game_name} caption={false} eager />
+      <a class="np-cover" href={href} aria-hidden="true" tabIndex={-1}>
+        <Poster key={g.platform + g.game_id} appid={appid} src={isSteam ? undefined : g.cover_url ?? ''} name={g.game_name} caption={false} eager />
       </a>
       <div class="np-body">
-        <h3>{g.game_name || `Steam app ${appid}`}</h3>
-        <p class="np-stats">
-          <span><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : '—'}</span>
-          <span><IconTrophy class="ic" /> {pct !== null ? `${pct}%` : '—'}</span>
-          {stats && stats.achievementsTotal > stats.achievementsEarned && (
-            <span class="muted">{stats.achievementsTotal - stats.achievementsEarned} achievements left</span>
-          )}
-        </p>
+        <h3>{g.game_name || `Game ${g.game_id}`}</h3>
+        {isSteam && (
+          <p class="np-stats">
+            <span><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : '—'}</span>
+            <span><IconTrophy class="ic" /> {pct !== null ? `${pct}%` : '—'}</span>
+            {stats && stats.achievementsTotal > stats.achievementsEarned && (
+              <span class="muted">{stats.achievementsTotal - stats.achievementsEarned} achievements left</span>
+            )}
+          </p>
+        )}
         <div class="np-actions">
-          <a class="btn btn-primary" href={`/game/${appid}`}>
+          <a class="btn btn-primary" href={href}>
             Open companion <IconArrow class="ic" />
           </a>
-          <button class="btn btn-ghost btn-sm" onClick={() => setPlaying(userId, appid, g.game_name, false)}>
+          <button class="btn btn-ghost btn-sm" onClick={() => setPlayingGame(userId, { platform: g.platform, id: g.game_id, name: g.game_name }, false)}>
             Stop playing
           </button>
         </div>

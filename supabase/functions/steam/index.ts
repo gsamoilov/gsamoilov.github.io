@@ -4,7 +4,9 @@
  * Public actions (no sign-in needed):
  *   game   { appid }            store details + live player count
  *   news   { appid }            latest announcements / patch notes
- *   search { term }             Steam store search
+ *   search { term }             game search across all platforms (IGDB; Steam store search if IGDB isn't set up)
+ *   igdb   { id }               one game's details from IGDB
+ *   charts { kind }             Steam most played: kind 'popular' (by rank) or 'trending' (climbers + new)
  *   wiki   { api, params }      MediaWiki proxy, only for wikis on the Indie Wiki Buddy list (used when a wiki blocks direct browser requests)
  * Signed-in actions (Authorization: Bearer <user session>):
  *   me     { appid }            my playtime + achievements (with global rarity)
@@ -18,8 +20,9 @@
  */
 import { adminClient } from '../_shared/clients.ts';
 import { corsHeaders, json } from '../_shared/http.ts';
-import { appidOf, game, HttpError, me, news, recent, search, steamidFor, wiki } from './logic.ts';
+import { appidOf, game, HttpError, me, news, recent, steamidFor, wiki } from './logic.ts';
 import { friendsNow, prices, profileStats } from './profile.ts';
+import { igdbGame, popular, searchGames, trending } from './catalog.ts';
 
 // ---------- router ----------
 
@@ -41,7 +44,14 @@ Deno.serve(async (req) => {
       case 'news':
         return json(req, await news(db, appidOf(body.appid)));
       case 'search':
-        return json(req, await search(db, String(body.term ?? '')));
+        return json(req, await searchGames(db, String(body.term ?? '')));
+      case 'igdb': {
+        const id = Number(body.id);
+        if (!Number.isInteger(id) || id <= 0) throw new HttpError(400, 'bad id');
+        return json(req, await igdbGame(db, id));
+      }
+      case 'charts':
+        return json(req, body.kind === 'trending' ? await trending(db) : await popular(db));
       case 'wiki':
         return json(req, await wiki(db, String(body.api ?? ''), body.params));
       case 'me': {

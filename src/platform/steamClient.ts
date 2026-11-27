@@ -69,9 +69,28 @@ export interface MyGameStats {
   achievements: MyAchievement[];
 }
 
+/** A search result from any platform. `appid` is set when the game is on Steam. */
 export interface SearchHit {
+  igdbId: number | null;
+  appid: number | null;
+  name: string;
+  cover: string;
+  year: number | null;
+  platforms: string[];
+}
+export interface IgdbGame extends SearchHit {
+  summary: string;
+  genres: string[];
+  developers: string[];
+  websites: { url: string; type: number | null }[];
+}
+export interface ChartEntry {
+  rank: number;
   appid: number;
   name: string;
+  peak: number;
+  lastWeekRank: number | null;
+  change: number | null;
 }
 
 // small in-memory cache so switching tabs/pages doesn't refetch
@@ -149,3 +168,8 @@ export const getFriendsNow = (userId: string, appid?: number) =>
   once(`friends:${userId}:${appid ?? 'all'}`, () => callSteam<FriendsNow>('friends', appid ? { appid } : {}));
 export const getPrices = (appids: number[]) =>
   once(`prices:${[...appids].sort().join(',')}`, () => callSteam<PriceInfo[]>('prices', { appids }));
+
+export const getIgdbGame = (id: number) => once(`igdb:${id}`, () => callSteam<IgdbGame>('igdb', { id }));
+export const getCharts = (kind: 'popular' | 'trending') => once(`charts:${kind}`, () => callSteam<ChartEntry[]>('charts', { kind }));
+/** Where a search hit's page lives: the full Steam page when it's on Steam, else the all-platforms page. */
+export const hitHref = (h: { appid: number | null; igdbId: number | null }) => (h.appid ? `/game/${h.appid}` : `/g/${h.igdbId}`);

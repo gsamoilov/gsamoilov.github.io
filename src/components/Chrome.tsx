@@ -1,11 +1,13 @@
 import { useLocation } from 'preact-iso';
-import { IconHome, IconPlay, IconUser } from './Icons';
+import { IconFlame, IconHome, IconPlay, IconTrend, IconUser } from './Icons';
 import { SteamButton } from './SteamButton';
 import { useAuth } from '../lib/auth';
 
 const NAV = [
   { href: '/', label: 'Home', Icon: IconHome, match: (p: string) => p === '/' },
-  { href: '/playing', label: 'Playing', Icon: IconPlay, match: (p: string) => p.startsWith('/game') || p === '/playing' },
+  { href: '/trending', label: 'Trending', Icon: IconTrend, match: (p: string) => p === '/trending' },
+  { href: '/popular', label: 'Popular', Icon: IconFlame, match: (p: string) => p === '/popular' },
+  { href: '/playing', label: 'Playing', Icon: IconPlay, match: (p: string) => p.startsWith('/game') || p.startsWith('/g/') || p === '/playing' },
   { href: '/profile', label: 'Profile', Icon: IconUser, match: (p: string) => p.startsWith('/profile') },
 ];
 

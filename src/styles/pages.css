@@ -318,3 +318,21 @@
 .watch-price .pill { height: 22px; font-size: .72rem; }
 .watch-remove { grid-area: x; width: 28px; height: 28px; border-radius: 50%; color: var(--faint); }
 .watch-remove:hover { color: var(--bad); background: rgba(255,107,122,.1); }
+
+/* ---------- phase 6: search, charts, any-platform games ---------- */
+.browse-page { padding-top: 24px; display: grid; gap: 16px; }
+.page-title { font-size: clamp(1.6rem, 5vw, 2.4rem); letter-spacing: -.03em; }
+.browse-page .game-search { margin-top: 0; }
+.poster.skel { border: 0; }
+.hit-card { display: grid; gap: 2px; min-width: 0; }
+.hit-meta { font-size: .74rem; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-hits .hit-text { display: grid; min-width: 0; }
+.search-hits .hit-text > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-hits img.thumb-cover, .search-hits .thumb-cover { width: 36px; height: 48px; object-fit: cover; border-radius: 4px; background: var(--bg-2); flex: none; }
+.search-hits img.thumb-capsule { width: 92px; height: 35px; }
+.search-hits .thumb-empty { display: block; }
+.hit-all { justify-content: center; color: var(--acc-solid) !important; font-size: .85rem !important; }
+.poster .badge .pill { height: 22px; padding: 0 8px; font-size: .72rem; font-weight: 700; background: rgba(7,8,13,.8); backdrop-filter: blur(6px); }
+.igdb-grid { display: grid; gap: 16px; margin-top: 16px; }
+.igdb-side { display: grid; gap: 16px; align-content: start; }
+@media (min-width: 1000px) { .igdb-grid { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }

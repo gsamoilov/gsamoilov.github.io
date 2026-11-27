@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'preact/hooks';
 import { FEATURED } from '../data/featured';
 import { steamArt } from '../platform/steam';
-import { Poster } from '../components/Poster';
 import { SteamButton } from '../components/SteamButton';
 import { GameSearch } from '../components/GameSearch';
 import { JumpBackIn, NowPlaying } from '../components/NowPlaying';
+import { ChartRow } from './Browse';
 import { IconArrow, IconBook, IconNote, IconTrophy, IconNews } from '../components/Icons';
 
 const FEATURES = [
@@ -59,17 +59,10 @@ export function Home() {
 
       <div class="wrap">
 
-        <section class="section" id="popular">
-          <div class="section-head">
-            <h2>Popular on Steam</h2>
-            <span class="eyebrow">Tap a cover</span>
-          </div>
-          <div class="poster-row">
-            {FEATURED.slice(0, 10).map((g, i) => (
-              <Poster appid={g.appid} name={g.name} tint={g.tint} href={`/game/${g.appid}`} eager={i < 4} />
-            ))}
-          </div>
-        </section>
+        <div id="popular">
+          <ChartRow kind="trending" />
+          <ChartRow kind="popular" />
+        </div>
 
         <section class="section">
           <div class="section-head">
@@ -86,16 +79,6 @@ export function Home() {
           </div>
         </section>
 
-        <section class="section">
-          <div class="section-head">
-            <h2>More games</h2>
-          </div>
-          <div class="poster-grid">
-            {FEATURED.slice(10).map((g) => (
-              <Poster appid={g.appid} name={g.name} tint={g.tint} href={`/game/${g.appid}`} />
-            ))}
-          </div>
-        </section>
       </div>
     </>
   );

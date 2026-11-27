@@ -7,13 +7,13 @@ type Status = 'loading' | 'idle' | 'saving' | 'saved' | 'error' | 'local';
  * "Where I left off": private per-game notes. Signed in -> saved to Supabase (RLS: only you can read them),
  * signed out -> kept on this device only.
  */
-export function Notes({ appid, userId }: { appid: number; userId: string | null }) {
+export function Notes({ appid, userId, platform = 'steam' }: { appid: number | string; userId: string | null; platform?: 'steam' | 'igdb' }) {
   const [text, setText] = useState('');
   const [status, setStatus] = useState<Status>('loading');
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const timer = useRef<number | undefined>(undefined);
   const pending = useRef<string | null>(null);
-  const localKey = `notes:steam:${appid}`;
+  const localKey = `notes:${platform}:${appid}`;
 
   useEffect(() => {
     let live = true;
@@ -26,7 +26,7 @@ export function Notes({ appid, userId }: { appid: number; userId: string | null 
     supabase
       .from('notes')
       .select('body, updated_at')
-      .eq('platform', 'steam')
+      .eq('platform', platform)
       .eq('game_id', String(appid))
       .maybeSingle()
       .then(({ data, error }) => {
@@ -39,7 +39,7 @@ export function Notes({ appid, userId }: { appid: number; userId: string | null 
     return () => {
       live = false;
     };
-  }, [appid, userId]);
+  }, [appid, userId, platform]);
 
   const save = async () => {
     const body = pending.current;
@@ -52,7 +52,7 @@ export function Notes({ appid, userId }: { appid: number; userId: string | null 
     setStatus('saving');
     const { error } = await supabase
       .from('notes')
-      .upsert({ user_id: userId, platform: 'steam', game_id: String(appid), body, updated_at: new Date().toISOString() });
+      .upsert({ user_id: userId, platform, game_id: String(appid), body, updated_at: new Date().toISOString() });
     if (error) {
       pending.current = pending.current ?? body; // keep it for the next attempt
       setStatus('error');
@@ -84,7 +84,7 @@ export function Notes({ appid, userId }: { appid: number; userId: string | null 
       document.removeEventListener('visibilitychange', onVis);
       flush();
     };
-  }, [appid, userId]);
+  }, [appid, userId, platform]);
 
   const label =
     status === 'loading' ? 'Loading…'

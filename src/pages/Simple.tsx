@@ -14,7 +14,7 @@ export function Playing() {
 
   // exactly one Playing game: go straight to it
   useEffect(() => {
-    if (only) route(`/game/${only.game_id}`, true);
+    if (only) route(only.platform === 'steam' ? `/game/${only.game_id}` : `/g/${only.game_id}`, true);
   }, [only?.game_id]);
 
   if (!ready || (session && playing.status !== 'ok' && playing.status !== 'error') || only) {
