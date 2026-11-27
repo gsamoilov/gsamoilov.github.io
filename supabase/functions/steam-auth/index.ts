@@ -48,7 +48,14 @@ Deno.serve(async (req) => {
   // 3. replay protection: the primary key makes a second insert of the same nonce fail
   const nonce = params.get('openid.response_nonce')!;
   const { error: nonceErr } = await admin.from('steam_auth_nonces').insert({ nonce });
-  if (nonceErr) return json(req, { error: 'This sign-in link was already used. Please sign in again.' }, 401);
+  if (nonceErr) {
+    // 23505 = unique violation: this exact Steam response was already used
+    if (nonceErr.code === '23505') {
+      return json(req, { error: 'This sign-in link was already used. Please sign in again.' }, 401);
+    }
+    console.error('nonce insert failed', nonceErr);
+    return json(req, { error: `Server error saving sign-in (${nonceErr.code ?? 'no code'}: ${nonceErr.message}). Check the steam-auth logs.` }, 500);
+  }
   // keep the table small
   await admin.from('steam_auth_nonces').delete().lt('created_at', new Date(Date.now() - 864e5).toISOString());
 

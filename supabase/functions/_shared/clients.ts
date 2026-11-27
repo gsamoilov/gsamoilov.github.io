@@ -5,7 +5,8 @@ const url = () => Deno.env.get('SUPABASE_URL')!;
 function firstKey(jsonVar: string): string | undefined {
   try {
     const v = JSON.parse(Deno.env.get(jsonVar) ?? '{}');
-    return v.default ?? Object.values(v)[0];
+    const k = v.default ?? Object.values(v)[0];
+    return typeof k === 'string' && k ? k : undefined;
   } catch {
     return undefined;
   }
@@ -13,14 +14,16 @@ function firstKey(jsonVar: string): string | undefined {
 
 /** Full-access client (bypasses RLS). Server-side only. */
 export function adminClient() {
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? firstKey('SUPABASE_SECRET_KEYS');
+  // New-style secret key first (sb_secret_...); legacy service_role JWT only as a fallback,
+  // because projects can disable legacy keys and then every admin query fails.
+  const key = firstKey('SUPABASE_SECRET_KEYS') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!key) throw new Error('No service role / secret key available to the function');
   return createClient(url(), key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 /** Public-key client, used to exchange a one-time token for a user session. */
 export function publicClient() {
-  const key = Deno.env.get('SUPABASE_ANON_KEY') ?? firstKey('SUPABASE_PUBLISHABLE_KEYS');
+  const key = firstKey('SUPABASE_PUBLISHABLE_KEYS') ?? Deno.env.get('SUPABASE_ANON_KEY');
   if (!key) throw new Error('No anon / publishable key available to the function');
   return createClient(url(), key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

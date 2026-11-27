@@ -35,7 +35,19 @@ export function takeReturnPath(): string {
 }
 
 /** Send Steam's response to our Edge Function, which verifies it and returns a session. */
-export async function completeSteamSignIn(query: string): Promise<void> {
+// A Steam response can be verified exactly once, so never send the same one twice
+// (e.g. if the page re-renders or the effect runs again).
+const inflight = new Map<string, Promise<void>>();
+export function completeSteamSignIn(query: string): Promise<void> {
+  let p = inflight.get(query);
+  if (!p) {
+    p = doCompleteSteamSignIn(query);
+    inflight.set(query, p);
+  }
+  return p;
+}
+
+async function doCompleteSteamSignIn(query: string): Promise<void> {
   if (!supabase) throw new Error('Sign-in is not configured yet.');
   const { data, error } = await supabase.functions.invoke('steam-auth', { body: { query } });
   if (error) {
