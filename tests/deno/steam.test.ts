@@ -1,6 +1,6 @@
 // Run: deno test tests/deno/  (checks the steam Edge Function logic against canned Steam responses)
 import { assertEquals, assertRejects } from 'jsr:@std/assert@1';
-import { game, HttpError, me, news, parseCommunityAchievementsXml, wiki } from '../../supabase/functions/steam/logic.ts';
+import { game, HttpError, me, news, parseCommunityAchievementsXml, recent, wiki } from '../../supabase/functions/steam/logic.ts';
 
 Deno.env.set('STEAM_API_KEY', 'TESTKEY');
 
@@ -209,4 +209,15 @@ Deno.test('me: family game hours are remembered after it leaves the 2-week list'
   stubFetch([[/GetRecentlyPlayedGames/, 200, { response: { total_count: 0 } }], ...base]);
   const later = await me(db, '76561197960287930', 10);
   assertEquals([later.playtimeMinutes, later.playtimeSource, later.playtimeKnown, typeof later.playtimeSeenAt], [777, 'remembered', true, 'string']);
+});
+
+Deno.test('recent: most played first, names included, playtimes remembered', async () => {
+  stubFetch([[/GetRecentlyPlayedGames/, 200, { response: { games: [
+    { appid: 1, name: 'A', playtime_2weeks: 30, playtime_forever: 100 },
+    { appid: 2, name: 'B', playtime_2weeks: 300, playtime_forever: 900 },
+  ] } }]]);
+  const db = fakeDb();
+  const r = await recent(db, '76561197960287930');
+  assertEquals(r.map((g) => [g.appid, g.name, g.minutes]), [[2, 'B', 900], [1, 'A', 100]]);
+  assertEquals(db.known.get('76561197960287930:2').minutes, 900);
 });

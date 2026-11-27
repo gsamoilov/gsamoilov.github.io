@@ -4,7 +4,7 @@ import { findFeatured } from '../data/featured';
 import { steamArt, steamStoreUrl } from '../platform/steam';
 import { getGame, getMyStats, getNews } from '../platform/steamClient';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { setPlaying, usePlaying } from '../lib/playing';
 import { formatCount, formatPlaytime, useAsync } from '../lib/useAsync';
 import { Poster } from '../components/Poster';
 import { IconBook, IconClock, IconNews, IconNote, IconPlay, IconTrophy } from '../components/Icons';
@@ -23,21 +23,8 @@ const TABS: { id: Tab; label: string; Icon: (p: { class?: string }) => preact.JS
 ];
 
 function PlayingToggle({ appid, name, userId }: { appid: number; name: string; userId: string | null }) {
-  const [on, setOn] = useState<boolean | null>(null);
+  const playing = usePlaying();
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    setOn(null);
-    if (!userId || !supabase) return;
-    supabase
-      .from('playing')
-      .select('game_id')
-      .eq('platform', 'steam')
-      .eq('game_id', String(appid))
-      .maybeSingle()
-      .then(({ data }) => setOn(!!data));
-  }, [appid, userId]);
-
   if (!userId) {
     return (
       <button class="btn btn-ghost btn-sm" aria-disabled="true" title="Sign in to mark games as Playing">
@@ -45,19 +32,19 @@ function PlayingToggle({ appid, name, userId }: { appid: number; name: string; u
       </button>
     );
   }
-  const toggle = async () => {
-    if (!supabase || busy || on === null) return;
-    setBusy(true);
-    const next = !on;
-    setOn(next); // optimistic
-    const { error } = next
-      ? await supabase.from('playing').insert({ user_id: userId, platform: 'steam', game_id: String(appid), game_name: name })
-      : await supabase.from('playing').delete().eq('platform', 'steam').eq('game_id', String(appid));
-    if (error && !(next && error.code === '23505')) setOn(!next);
-    setBusy(false);
-  };
+  const on = playing.isPlaying(appid);
+  const ready = playing.status === 'ok';
   return (
-    <button class="btn btn-ghost btn-sm" aria-pressed={!!on} onClick={toggle} disabled={on === null}>
+    <button
+      class="btn btn-ghost btn-sm"
+      aria-pressed={on}
+      disabled={!ready || busy}
+      onClick={async () => {
+        setBusy(true);
+        await setPlaying(userId, appid, name, !on);
+        setBusy(false);
+      }}
+    >
       <IconPlay class="ic" /> {on ? 'Playing' : 'Mark as Playing'}
     </button>
   );

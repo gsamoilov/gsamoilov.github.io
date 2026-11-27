@@ -1,19 +1,46 @@
 import { SteamButton } from '../components/SteamButton';
 import { IconPlay, IconUser } from '../components/Icons';
 import { signOut, useAuth } from '../lib/auth';
+import { usePlaying } from '../lib/playing';
+import { JumpBackIn, NowPlaying } from '../components/NowPlaying';
+import { useEffect } from 'preact/hooks';
+import { useLocation } from 'preact-iso';
 
 export function Playing() {
-  const { session } = useAuth();
+  const { ready, session } = useAuth();
+  const playing = usePlaying();
+  const { route } = useLocation();
+  const only = playing.status === 'ok' && playing.games.length === 1 ? playing.games[0] : null;
+
+  // exactly one Playing game: go straight to it
+  useEffect(() => {
+    if (only) route(`/game/${only.game_id}`, true);
+  }, [only?.game_id]);
+
+  if (!ready || (session && playing.status !== 'ok' && playing.status !== 'error') || only) {
+    return <div class="wrap empty-page"><div class="spinner" aria-hidden="true" /></div>;
+  }
+  if (session && playing.games.length > 1) {
+    return (
+      <div class="wrap playing-page">
+        <NowPlaying />
+        <JumpBackIn />
+      </div>
+    );
+  }
   return (
-    <div class="wrap empty-page">
-      <span class="empty-ic"><IconPlay /></span>
-      <h1>Nothing marked as Playing</h1>
-      <p class="muted">
-        {session
-          ? 'Open a game and tap “Mark as Playing”. It will show up at the top of your home page (phase 4).'
-          : 'Sign in, open a game and tap “Mark as Playing”. It will show up at the top of your home page.'}
-      </p>
-      {session ? <a class="btn btn-primary" href="/#popular">Browse games</a> : <SteamButton />}
+    <div class="wrap playing-page">
+      <div class="empty-page">
+        <span class="empty-ic"><IconPlay /></span>
+        <h1>Nothing marked as Playing</h1>
+        <p class="muted">
+          {session
+            ? 'Tap “Playing” on a game below, or on any game page. It then shows up at the top of your home page.'
+            : 'Sign in, open a game and tap “Mark as Playing”. It will show up at the top of your home page.'}
+        </p>
+        {session ? <a class="btn btn-ghost" href="/#popular">Browse games</a> : <SteamButton />}
+      </div>
+      <JumpBackIn />
     </div>
   );
 }

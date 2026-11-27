@@ -8,12 +8,13 @@
  *   wiki   { api, params }      MediaWiki proxy, only for wikis on the Indie Wiki Buddy list (used when a wiki blocks direct browser requests)
  * Signed-in actions (Authorization: Bearer <user session>):
  *   me     { appid }            my playtime + achievements (with global rarity)
+ *   recent {}                   my recently played games (last 2 weeks)
  *
  * Every Steam response is cached in public.steam_cache. The Steam Web API key never leaves this function.
  */
 import { adminClient } from '../_shared/clients.ts';
 import { corsHeaders, json } from '../_shared/http.ts';
-import { appidOf, game, HttpError, me, news, search, steamidFor, wiki } from './logic.ts';
+import { appidOf, game, HttpError, me, news, recent, search, steamidFor, wiki } from './logic.ts';
 
 // ---------- router ----------
 
@@ -43,6 +44,8 @@ Deno.serve(async (req) => {
         const steamid = await steamidFor(db, req);
         return json(req, await me(db, steamid, appid));
       }
+      case 'recent':
+        return json(req, await recent(db, await steamidFor(db, req)));
       default:
         return json(req, { error: 'unknown action' }, 400);
     }

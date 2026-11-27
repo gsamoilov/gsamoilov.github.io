@@ -91,3 +91,11 @@ export const getNews = (appid: number) => once(`news:${appid}`, () => callSteam<
 export const getMyStats = (appid: number, userId: string) =>
   once(`me:${userId}:${appid}`, () => callSteam<MyGameStats>('me', { appid }));
 export const searchGames = (term: string) => once(`search:${term.toLowerCase()}`, () => callSteam<SearchHit[]>('search', { term }));
+
+export interface RecentGame {
+  appid: number;
+  name: string;
+  minutes: number;
+  minutes2Weeks: number;
+}
+export const getRecent = (userId: string) => once(`recent:${userId}`, () => callSteam<RecentGame[]>('recent'));

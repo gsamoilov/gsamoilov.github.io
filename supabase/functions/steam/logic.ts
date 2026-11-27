@@ -169,7 +169,9 @@ type PlayerAch =
 
 export interface RecentGame {
   appid: number;
+  name: string;
   minutes: number;
+  minutes2Weeks: number;
 }
 
 /** Steam's "recently played" list (last 2 weeks; includes Family Library games). */
@@ -177,7 +179,12 @@ export async function fetchRecentlyPlayed(steamid: string): Promise<RecentGame[]
   const { status, body } = await getJson(api('IPlayerService/GetRecentlyPlayedGames/v1/', { steamid, count: 0 }, true));
   if (status !== 200) throw new Error(`recent ${status}`);
   return ((body?.response?.games ?? []) as any[])
-    .map((g) => ({ appid: Number(g.appid), minutes: Number(g.playtime_forever ?? 0) }))
+    .map((g) => ({
+      appid: Number(g.appid),
+      name: String(g.name ?? ''),
+      minutes: Number(g.playtime_forever ?? 0),
+      minutes2Weeks: Number(g.playtime_2weeks ?? 0),
+    }))
     .filter((g) => g.appid > 0 && Number.isFinite(g.minutes));
 }
 
@@ -323,4 +330,14 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
     achievements,
     diagnostics: diag,
   };
+}
+
+/** Signed-in user's recently played games (last 2 weeks, most played first). Also saves their playtimes. */
+export async function recent(db: ReturnType<typeof adminClient>, steamid: string) {
+  const games = await cached(db, `recent:${steamid}`, 10 * MIN, async () => {
+    const g = await fetchRecentlyPlayed(steamid);
+    await rememberPlaytime(db, steamid, g);
+    return g;
+  });
+  return [...games].sort((a, b) => b.minutes2Weeks - a.minutes2Weeks);
 }

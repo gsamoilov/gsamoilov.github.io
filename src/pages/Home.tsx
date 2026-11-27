@@ -4,6 +4,7 @@ import { steamArt } from '../platform/steam';
 import { Poster } from '../components/Poster';
 import { SteamButton } from '../components/SteamButton';
 import { GameSearch } from '../components/GameSearch';
+import { JumpBackIn, NowPlaying } from '../components/NowPlaying';
 import { IconArrow, IconBook, IconNote, IconTrophy, IconNews } from '../components/Icons';
 
 const FEATURES = [
@@ -20,6 +21,10 @@ export function Home() {
 
   return (
     <>
+      <div class="wrap home-top">
+        <NowPlaying />
+        <JumpBackIn limit={4} />
+      </div>
       <section class="hero">
         <div class="hero-art" aria-hidden="true">
           <img
@@ -53,7 +58,6 @@ export function Home() {
       </section>
 
       <div class="wrap">
-        {/* "Now playing" quick-link strip appears here once signed in (Phase 4) */}
 
         <section class="section" id="popular">
           <div class="section-head">

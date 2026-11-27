@@ -1,9 +1,11 @@
 import { IconSteam } from './Icons';
 import { authEnabled } from '../config';
-import { signInWithSteam } from '../lib/auth';
+import { signInWithSteam, useAuth } from '../lib/auth';
 
 export function SteamButton({ small }: { small?: boolean }) {
   const enabled = authEnabled();
+  const { session } = useAuth();
+  if (session) return null; // already signed in
   return (
     <button
       type="button"
