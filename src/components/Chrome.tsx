@@ -1,6 +1,7 @@
 import { useLocation } from 'preact-iso';
 import { IconHome, IconPlay, IconUser } from './Icons';
 import { SteamButton } from './SteamButton';
+import { useAuth } from '../lib/auth';
 
 const NAV = [
   { href: '/', label: 'Home', Icon: IconHome, match: (p: string) => p === '/' },
@@ -23,9 +24,22 @@ export function TopNav() {
           ))}
         </nav>
         <div class="spacer" />
-        <SteamButton small />
+        <AccountChip />
       </div>
     </header>
+  );
+}
+
+function AccountChip() {
+  const { ready, session, profile } = useAuth();
+  if (!ready) return <span class="avatar skel" aria-hidden="true" />;
+  if (!session) return <SteamButton small />;
+  const name = profile?.persona_name || 'Profile';
+  return (
+    <a class="account" href="/profile" aria-label={`${name}: your profile`}>
+      {profile?.avatar_url ? <img class="avatar" src={profile.avatar_url} alt="" width={32} height={32} /> : <span class="avatar" />}
+      <span class="account-name">{name}</span>
+    </a>
   );
 }
 

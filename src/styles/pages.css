@@ -99,3 +99,27 @@
 .prose p, .prose li { color: #c5cbdc; }
 .prose ul { padding-left: 20px; display: grid; gap: 8px; }
 .prose a { color: var(--acc-solid); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- account ---------- */
+.avatar { display: block; width: 32px; height: 32px; border-radius: 10px; background: var(--card-hi); border: 1px solid var(--bd); object-fit: cover; flex: none; }
+.avatar-lg { width: 88px; height: 88px; border-radius: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.account { display: flex; align-items: center; gap: 10px; padding: 3px 12px 3px 3px; border-radius: var(--pill); background: var(--card-hi); border: 1px solid var(--bd); font-weight: 600; font-size: .9rem; transition: border-color .2s; }
+.account:hover { border-color: rgba(124,245,196,.5); }
+.account .avatar { width: 30px; height: 30px; border-radius: 50%; border: 0; }
+.account-name { max-width: 14ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 420px) { .account-name { display: none; } .account { padding: 3px; } }
+
+.spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--bd); border-top-color: var(--acc-solid); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.profile-page { padding-top: 32px; display: grid; gap: 16px; }
+.profile-card { display: grid; grid-template-columns: auto 1fr; gap: 18px; padding: 20px; align-items: center; }
+.profile-id { min-width: 0; }
+.profile-id h1 { font-size: clamp(1.5rem, 5vw, 2.2rem); letter-spacing: -.03em; line-height: 1.1; margin: 2px 0 10px; overflow-wrap: anywhere; }
+.profile-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+@media (min-width: 700px) { .profile-card { grid-template-columns: auto 1fr auto; } .profile-actions { grid-column: auto; } }
+.stat-row-inline { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill-good { color: var(--good); border-color: rgba(124,245,196,.35); }
+.pill-warn { color: var(--warn); border-color: rgba(255,200,87,.35); }
+.small { font-size: .85rem; margin-top: 10px; }
+.center { text-align: center; }
