@@ -18,6 +18,8 @@ export function adminClient() {
   // because projects can disable legacy keys and then every admin query fails.
   const key = firstKey('SUPABASE_SECRET_KEYS') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!key) throw new Error('No service role / secret key available to the function');
+  // Log only the kind of key, never the key itself.
+  console.log('admin client key kind:', key.startsWith('sb_secret_') ? 'new secret key' : key.startsWith('sb_publishable_') ? 'PUBLISHABLE (wrong!)' : 'legacy JWT');
   return createClient(url(), key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
