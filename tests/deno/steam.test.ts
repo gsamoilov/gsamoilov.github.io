@@ -4,20 +4,31 @@ import { game, HttpError, me, news, parseCommunityAchievementsXml, wiki } from '
 
 Deno.env.set('STEAM_API_KEY', 'TESTKEY');
 
-/** Minimal stand-in for the Supabase client: an in-memory steam_cache. */
+/** Minimal stand-in for the Supabase client: in-memory steam_cache and known_playtime tables. */
 function fakeDb() {
   const cache = new Map<string, any>();
-  const from = (_t: string) => {
-    let key = '';
+  const known = new Map<string, any>();
+  const from = (table: string) => {
+    const filters: Record<string, unknown> = {};
     const q: any = {
       select: () => q,
-      eq: (_c: string, v: string) => ((key = v), q),
-      maybeSingle: async () => ({ data: cache.get(key) ?? null }),
-      upsert: async (row: any) => (cache.set(row.key, row), { error: null }),
+      eq: (c: string, v: unknown) => ((filters[c] = v), q),
+      maybeSingle: async () => {
+        if (table === 'steam_cache') return { data: cache.get(String(filters.key)) ?? null };
+        if (table === 'known_playtime') return { data: known.get(`${filters.steamid}:${filters.appid}`) ?? null };
+        return { data: null };
+      },
+      upsert: async (rows: any) => {
+        for (const row of Array.isArray(rows) ? rows : [rows]) {
+          if (table === 'steam_cache') cache.set(row.key, row);
+          if (table === 'known_playtime') known.set(`${row.steamid}:${row.appid}`, row);
+        }
+        return { error: null };
+      },
     };
     return q;
   };
-  return { from, cache } as any;
+  return { from, cache, known } as any;
 }
 
 let calls: string[] = [];
@@ -179,4 +190,23 @@ Deno.test('me: family game with earned achievements but no recent play -> family
   ]);
   const r = await me(fakeDb(), '76561197960287930', 10);
   assertEquals([r.owned, r.familyOrBorrowed, r.playtimeKnown, r.achievementsEarned], [false, true, false, 1]);
+});
+
+Deno.test('me: family game hours are remembered after it leaves the 2-week list', async () => {
+  const db = fakeDb();
+  const base: [RegExp, number, unknown][] = [
+    [/GetOwnedGames/, 200, { response: { game_count: 120, games: [] } }],
+    [/GetSchemaForGame/, 200, SCHEMA],
+    [/GetGlobalAchievementPercentages/, 200, GLOBAL],
+    [/GetPlayerAchievements/, 200, { playerstats: { success: true, achievements: [{ apiname: 'ACH_EASY', achieved: 1, unlocktime: 5 }] } }],
+  ];
+  // day 1: in recently played -> shown and saved
+  stubFetch([[/GetRecentlyPlayedGames/, 200, { response: { games: [{ appid: 10, playtime_forever: 777 }] } }], ...base]);
+  const day1 = await me(db, '76561197960287930', 10);
+  assertEquals([day1.playtimeMinutes, day1.playtimeSource], [777, 'recent']);
+  // weeks later: dropped off the list (fresh cache) -> remembered value
+  db.cache.clear();
+  stubFetch([[/GetRecentlyPlayedGames/, 200, { response: { total_count: 0 } }], ...base]);
+  const later = await me(db, '76561197960287930', 10);
+  assertEquals([later.playtimeMinutes, later.playtimeSource, later.playtimeKnown, typeof later.playtimeSeenAt], [777, 'remembered', true, 'string']);
 });

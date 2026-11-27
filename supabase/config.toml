@@ -10,3 +10,7 @@ verify_jwt = false
 # Public data (game info, news, search) is open; the "me" action checks the user's session itself.
 # (Platform JWT checks would also reject the new-style publishable key.)
 verify_jwt = false
+
+[functions.refresh-playtime]
+# Called by a scheduled GitHub workflow, authenticated with the CRON_SECRET header instead.
+verify_jwt = false

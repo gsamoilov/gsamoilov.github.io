@@ -106,12 +106,22 @@ export function Game() {
       : stats.familyOrBorrowed
         ? 'family game'
         : 'not in library';
-  const playtimeTitle =
-    stats?.familyOrBorrowed && !stats.playtimeKnown
-      ? "Steam only shares playtime for Family Library games you've played in the last 2 weeks"
-      : stats && !stats.profileVisible
-        ? 'Your Steam game details are private'
-        : 'Your total playtime';
+  const seenOn = stats?.playtimeSeenAt
+    ? new Date(stats.playtimeSeenAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })
+    : '';
+  const playtimeTip: string | null = !stats
+    ? null
+    : !stats.profileVisible
+      ? "Your Steam game details are private, so Steam doesn't share your playtime. You can change this in Steam's privacy settings."
+      : stats.familyOrBorrowed && stats.playtimeSource === 'remembered'
+        ? `This game is from your Family Library. Steam stopped sharing its playtime, so this is the last number we saw (${seenOn}).`
+        : stats.familyOrBorrowed && stats.playtimeSource === 'recent'
+          ? "This game is from your Family Library. Steam only shows family playtime for 2 weeks after you last play, so we save it to keep it here after that."
+          : stats.familyOrBorrowed
+            ? "This game is from your Family Library. Steam only shares playtime for family games for 2 weeks after you last play them, and we haven't caught it in that window yet. Play it again and we'll keep track of your hours from then on."
+            : !stats.owned
+              ? "This game isn't in your Steam library."
+              : null;
 
   return (
     <>
@@ -135,10 +145,20 @@ export function Game() {
                 <b><span class="dot live" /> {players !== null ? formatCount(players) : dash}</b>
                 <span>playing now</span>
               </div>
-              <div class="stat" title={playtimeTitle}>
-                <b><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : dash}</b>
-                <span>{playtimeLabel}</span>
-              </div>
+              {playtimeTip ? (
+                <div class="stat has-tip">
+                  <button type="button" class="tip-trigger" aria-describedby="playtime-tip">
+                    <b><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : dash}</b>
+                    <span>{playtimeLabel} <i class="tip-i" aria-hidden="true">i</i></span>
+                  </button>
+                  <div role="tooltip" id="playtime-tip" class="tip">{playtimeTip}</div>
+                </div>
+              ) : (
+                <div class="stat" title="Your total playtime">
+                  <b><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : dash}</b>
+                  <span>{playtimeLabel}</span>
+                </div>
+              )}
               <div class="stat" title={stats ? `${stats.achievementsEarned} of ${stats.achievementsTotal} achievements` : ''}>
                 <b><IconTrophy class="ic" /> {pct !== null ? `${pct}%` : dash}</b>
                 <span>complete</span>

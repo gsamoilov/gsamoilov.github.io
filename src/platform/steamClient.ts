@@ -59,6 +59,9 @@ export interface MyGameStats {
   familyOrBorrowed: boolean;
   playtimeMinutes: number;
   playtimeKnown: boolean;
+  /** owned = your library, recent = Steam's 2-week list, remembered = last number we saved */
+  playtimeSource?: 'owned' | 'recent' | 'remembered' | 'none';
+  playtimeSeenAt?: string;
   achievementsState: 'ok' | 'private' | 'nostats' | 'unavailable';
   diagnostics?: Record<string, unknown>;
   achievementsTotal: number;

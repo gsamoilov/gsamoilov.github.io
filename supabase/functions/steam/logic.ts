@@ -167,6 +167,30 @@ type PlayerAch =
   | { state: 'nostats' }
   | { state: 'unavailable' };
 
+export interface RecentGame {
+  appid: number;
+  minutes: number;
+}
+
+/** Steam's "recently played" list (last 2 weeks; includes Family Library games). */
+export async function fetchRecentlyPlayed(steamid: string): Promise<RecentGame[]> {
+  const { status, body } = await getJson(api('IPlayerService/GetRecentlyPlayedGames/v1/', { steamid, count: 0 }, true));
+  if (status !== 200) throw new Error(`recent ${status}`);
+  return ((body?.response?.games ?? []) as any[])
+    .map((g) => ({ appid: Number(g.appid), minutes: Number(g.playtime_forever ?? 0) }))
+    .filter((g) => g.appid > 0 && Number.isFinite(g.minutes));
+}
+
+/** Saves playtimes so we still know them after a game drops off the 2-week list. */
+export async function rememberPlaytime(db: ReturnType<typeof adminClient>, steamid: string, games: RecentGame[]) {
+  if (!games.length) return;
+  const now = new Date().toISOString();
+  const { error } = await db
+    .from('known_playtime')
+    .upsert(games.map((g) => ({ steamid, appid: g.appid, minutes: g.minutes, seen_at: now })));
+  if (error) console.warn('rememberPlaytime failed', error.message);
+}
+
 export async function me(db: ReturnType<typeof adminClient>, steamid: string, appid: number) {
   const diag: Record<string, unknown> = {};
 
@@ -184,21 +208,35 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
   diag.gameDetailsPublic = owned.visible;
   diag.inOwnedGames = owned.owned;
 
-  // 2. Not owned: borrowed games still show up in "recently played" (last 2 weeks), with total playtime.
+  // 2. Not owned: borrowed games show up in "recently played" (last 2 weeks) with their total playtime.
+  //    Every time we see that list we save it, so older family games keep their last known hours.
   let playtimeMinutes = owned.playtimeMinutes;
-  let playtimeSource: 'owned' | 'recent' | 'none' = owned.owned ? 'owned' : 'none';
+  let playtimeSource: 'owned' | 'recent' | 'remembered' | 'none' = owned.owned ? 'owned' : 'none';
+  let playtimeSeenAt: string | undefined;
   if (!owned.owned && owned.visible) {
     const recent = await cached(db, `recent:${steamid}`, 10 * MIN, async () => {
-      const { status, body } = await getJson(api('IPlayerService/GetRecentlyPlayedGames/v1/', { steamid, count: 0 }, true));
-      if (status !== 200) throw new Error(`recent ${status}`);
-      return ((body?.response?.games ?? []) as any[]).map((g) => ({ appid: Number(g.appid), minutes: Number(g.playtime_forever ?? 0) }));
-    }).catch(() => []);
+      const games = await fetchRecentlyPlayed(steamid);
+      await rememberPlaytime(db, steamid, games);
+      return games;
+    }).catch(() => [] as RecentGame[]);
     const g = recent.find((x) => x.appid === appid);
     diag.recentlyPlayedCount = recent.length;
     diag.inRecentlyPlayed = !!g;
     if (g) {
       playtimeMinutes = g.minutes;
       playtimeSource = 'recent';
+    } else {
+      const { data: known } = await db
+        .from('known_playtime')
+        .select('minutes, seen_at')
+        .eq('steamid', steamid)
+        .eq('appid', appid)
+        .maybeSingle();
+      if (known) {
+        playtimeMinutes = Number(known.minutes);
+        playtimeSource = 'remembered';
+        playtimeSeenAt = String(known.seen_at);
+      }
     }
   }
   diag.playtimeSource = playtimeSource;
@@ -277,6 +315,8 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
     familyOrBorrowed: playedWithoutOwning,
     playtimeMinutes,
     playtimeKnown: playtimeSource !== 'none',
+    playtimeSource,
+    playtimeSeenAt,
     achievementsState: player.state,
     achievementsTotal: achievements.length,
     achievementsEarned: earned,

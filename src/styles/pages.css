@@ -26,8 +26,8 @@
 .feature p { color: var(--muted); font-size: .92rem; }
 
 /* ---------- game page ---------- */
-.game-hero { position: relative; overflow: hidden; isolation: isolate; }
-.game-hero-art { position: absolute; inset: 0; z-index: -1; background: radial-gradient(70% 90% at 80% 0%, #18203a, transparent), var(--bg); }
+.game-hero { position: relative; isolation: isolate; }
+.game-hero-art { position: absolute; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(70% 90% at 80% 0%, #18203a, transparent), var(--bg); }
 .game-hero-art img { width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: saturate(1.1); transition: opacity 1s; }
 .game-hero-art img.loaded { opacity: .42; }
 .game-hero-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,8,13,.3), rgba(7,8,13,.75) 60%, var(--bg)); }
@@ -228,3 +228,17 @@
 /* phones: keep the panel area at least a screen tall, so switching tabs can always scroll the panel to the top */
 @media (max-width: 999px) { .game-grid { min-height: calc(100dvh - var(--nav-h) - 60px); align-content: start; } }
 .diag { margin-top: 14px; padding: 10px; border-radius: 8px; background: rgba(0,0,0,.4); border: 1px dashed var(--bd); font: .72rem/1.4 var(--mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* info popup on stat tiles (hover on desktop, tap on phones) */
+.stat.has-tip { position: relative; padding: 0; }
+.tip-trigger { display: block; width: 100%; height: 100%; padding: 10px 12px; text-align: left; border-radius: inherit; cursor: help; }
+.tip-trigger > span { display: flex; align-items: center; gap: 5px; font-size: .74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip-i { display: inline-grid; place-items: center; flex: none; width: 13px; height: 13px; border-radius: 50%; border: 1px solid currentColor; font-size: .6rem; font-weight: 700; font-style: normal; line-height: 1; opacity: .8; }
+.tip { position: absolute; z-index: 40; top: calc(100% + 8px); left: 50%; width: min(270px, 80vw); transform: translateX(-50%) translateY(-4px);
+  padding: 10px 12px; border-radius: 10px; background: #1a1e2b; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 12px 30px rgba(0,0,0,.55);
+  font-size: .8rem; line-height: 1.45; color: var(--ink); white-space: normal; text-align: left;
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .15s, transform .15s, visibility .15s; }
+.tip::before { content: ''; position: absolute; top: -6px; left: 50%; width: 10px; height: 10px; transform: translateX(-50%) rotate(45deg); background: #1a1e2b; border-left: 1px solid rgba(255,255,255,.14); border-top: 1px solid rgba(255,255,255,.14); }
+.has-tip:hover .tip, .has-tip:focus-within .tip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+/* while a stat popup is open, lift the header above the sticky tab bar so the popup isn't covered */
+.game-hero:has(.has-tip:hover), .game-hero:has(.has-tip:focus-within) { z-index: 22; }
