@@ -5,3 +5,8 @@ project_id = "samoilov-org"
 # Called by signed-OUT browsers, so it can't require a Supabase JWT.
 # It authenticates the user itself by verifying the Steam OpenID response.
 verify_jwt = false
+
+[functions.steam]
+# Public data (game info, news, search) is open; the "me" action checks the user's session itself.
+# (Platform JWT checks would also reject the new-style publishable key.)
+verify_jwt = false

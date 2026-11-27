@@ -21,5 +21,10 @@ npm run build   # outputs dist/ (404.html = index.html so deep links work on Pag
 Build-time variables (GitHub → Settings → Secrets and variables → Actions → **Variables**): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_PROJECT_REF`.
 Secrets (same page → **Secrets**): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`. The Steam key is a **Supabase** secret (`STEAM_API_KEY`), not a GitHub one.
 
+## Wikis
+
+`src/data/wikis.json` maps games to independent wikis using [Indie Wiki Buddy](https://github.com/KevinPayravi/indie-wiki-buddy)'s list (MIT).
+Refresh it with `npm run wikis` (downloads their latest `data/data.json`), then commit. Pin a game to a specific wiki in `WIKI_OVERRIDES` (`src/lib/wikiMatch.ts`).
+
 `src/styles/themes.css` holds the saved theme pack from the old site (not loaded yet).
 `archive/themes-demo.html` is the original interactive theme demo (not deployed).

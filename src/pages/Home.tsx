@@ -3,6 +3,7 @@ import { FEATURED } from '../data/featured';
 import { steamArt } from '../platform/steam';
 import { Poster } from '../components/Poster';
 import { SteamButton } from '../components/SteamButton';
+import { GameSearch } from '../components/GameSearch';
 import { IconArrow, IconBook, IconNote, IconTrophy, IconNews } from '../components/Icons';
 
 const FEATURES = [
@@ -46,6 +47,7 @@ export function Home() {
               Browse games <IconArrow class="ic" />
             </a>
           </div>
+          <GameSearch />
           {heroOk && <p class="hero-credit">Backdrop: {hero.name}</p>}
         </div>
       </section>

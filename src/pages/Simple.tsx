@@ -75,6 +75,12 @@ export function About() {
       <h2>Credits</h2>
       <ul>
         <li>Game data and artwork come from Steam. This site isn't affiliated with or endorsed by Valve. “Steam” is a trademark of Valve Corporation.</li>
+        <li>
+          Which wiki belongs to which game comes from{' '}
+          <a href="https://github.com/KevinPayravi/indie-wiki-buddy" target="_blank" rel="noopener">Indie Wiki Buddy</a> by Kevin Payravi
+          (MIT License), the community list of independent wikis. Thank you!
+        </li>
+        <li>Wiki articles belong to their wikis and editors. Each article shows its source and license (usually CC BY-SA) underneath.</li>
       </ul>
     </div>
   );

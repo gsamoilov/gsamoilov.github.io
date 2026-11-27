@@ -123,3 +123,107 @@
 .pill-warn { color: var(--warn); border-color: rgba(255,200,87,.35); }
 .small { font-size: .85rem; margin-top: 10px; }
 .center { text-align: center; }
+
+/* ---------- phase 3: game page panels ---------- */
+.panel-empty { display: grid; gap: 12px; justify-items: start; color: var(--ink); font-size: .95rem; }
+.panel-note { font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+
+/* achievements */
+.ach-list { list-style: none; display: grid; gap: 8px; }
+.ach { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 8px; border-radius: var(--rad-sm); background: rgba(255,255,255,.025); border: 1px solid transparent; }
+.ach:hover { border-color: var(--bd); }
+.ach-icon { width: 44px; height: 44px; border-radius: 8px; background: var(--bg-2); }
+.ach.is-hidden .ach-icon { filter: blur(7px) grayscale(.6); }
+.ach-body { min-width: 0; display: grid; }
+.ach-name { font-weight: 600; font-size: .92rem; line-height: 1.25; }
+.ach-desc { font-size: .8rem; color: var(--muted); line-height: 1.35; display: flex; align-items: center; gap: 5px; }
+.ach-reveal { text-align: left; display: grid; padding: 0; }
+.ach.is-hidden { background: repeating-linear-gradient(135deg, rgba(255,200,87,.05) 0 8px, transparent 8px 16px); border-color: rgba(255,200,87,.18); }
+.ach.is-hidden .ach-name { color: var(--warn); }
+.ach-pct { font-size: .75rem; font-weight: 700; padding: 3px 8px; border-radius: var(--pill); background: var(--card-hi); color: var(--muted); }
+.ach-pct.rare { color: #ffc857; background: rgba(255,200,87,.1); }
+.ach-pct.uncommon { color: #9db8ff; background: rgba(91,140,255,.12); }
+
+/* notes */
+.notes-wrap { display: grid; gap: 8px; }
+.notes { min-height: 220px; }
+.notes:disabled { opacity: .6; }
+.notes-status { font-size: .78rem; color: var(--faint); }
+.notes-status.saved { color: var(--good); }
+.notes-status.error { color: var(--bad); }
+
+/* patch notes */
+.news-list { display: grid; gap: 10px; }
+@media (min-width: 1000px) { .news-list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .news-item.open { grid-column: 1 / -1; } }
+.news-item { border: 1px solid var(--bd); border-radius: var(--rad-sm); background: rgba(255,255,255,.02); overflow: hidden; }
+.news-head { display: grid; gap: 4px; width: 100%; padding: 14px; text-align: left; }
+.news-meta { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); }
+.news-meta .pill { height: 22px; font-size: .72rem; }
+.news-title { font-weight: 700; font-size: 1rem; letter-spacing: -.01em; line-height: 1.3; }
+.news-excerpt { font-size: .85rem; color: var(--muted); }
+.news-body { padding: 0 14px 16px; display: grid; gap: 14px; justify-items: start; }
+
+/* rich text (wiki + news) */
+.rich { font-size: .95rem; line-height: 1.65; color: #d5d9e6; overflow-wrap: anywhere; max-width: 100%; }
+.rich > * + * { margin-top: .7em; }
+.rich h1, .rich h2, .rich h3, .rich h4, .rich h5 { color: var(--ink); letter-spacing: -.015em; line-height: 1.25; margin-top: 1.3em; }
+.rich h2 { font-size: 1.25rem; padding-bottom: 6px; border-bottom: 1px solid var(--bd); }
+.rich h3 { font-size: 1.1rem; }
+.rich h4, .rich h5 { font-size: 1rem; }
+.rich a { color: var(--acc-solid); text-decoration: none; border-bottom: 1px solid rgba(124,245,196,.3); }
+.rich a:hover { border-bottom-color: var(--acc-solid); }
+.rich img { max-width: 100%; height: auto; display: inline-block; border-radius: 6px; vertical-align: middle; }
+.rich ul, .rich ol { padding-left: 1.3em; }
+.rich li + li { margin-top: .25em; }
+.rich blockquote { border-left: 3px solid var(--bd); padding-left: 12px; color: var(--muted); }
+.rich pre { overflow-x: auto; background: rgba(0,0,0,.35); padding: 10px; border-radius: 8px; font-size: .85rem; }
+.rich hr { border: 0; border-top: 1px solid var(--bd); }
+.rich .bb-spoiler { background: #2a2e3d; color: transparent; border-radius: 4px; cursor: pointer; }
+.rich .bb-spoiler:hover, .rich .bb-spoiler:active { color: inherit; }
+.rich .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--bd); border-radius: 8px; }
+.rich table { border-collapse: collapse; font-size: .85rem; min-width: 100%; }
+.rich th, .rich td { padding: 6px 10px; border-bottom: 1px solid var(--bd); text-align: left; vertical-align: top; }
+.rich th { background: rgba(255,255,255,.04); color: var(--ink); }
+.rich caption { padding: 6px; font-weight: 600; color: var(--ink); }
+
+/* wiki panel */
+.wiki-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -4px 0 12px; }
+.wiki-name { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.02rem; }
+.wiki-name .pill { height: 22px; font-size: .72rem; }
+.wiki-open { font-size: .82rem; color: var(--muted); }
+.wiki-open:hover { color: var(--ink); }
+.wiki-back { font-size: .85rem; color: var(--muted); font-weight: 600; margin: -6px 0 10px; padding: 4px 0; }
+.wiki-back:hover { color: var(--ink); }
+.wiki-title { font-size: clamp(1.3rem, 4vw, 1.7rem); letter-spacing: -.025em; margin-bottom: 10px; }
+/* infoboxes: float beside text on wide screens, full width on phones */
+.wiki-content .infobox, .wiki-content .portable-infobox, .wiki-content aside, .wiki-content .infobox-wrapper { float: none; width: 100% !important; max-width: 100%; margin: 0 0 1em; }
+@media (min-width: 1200px) { .wiki-content .infobox, .wiki-content .portable-infobox, .wiki-content .infobox-wrapper { float: right; width: 300px !important; margin: 0 0 1em 1.2em; } }
+.wiki-content .thumb, .wiki-content figure { margin: .8em 0; max-width: 100%; }
+.wiki-content .thumbcaption, .wiki-content figcaption { font-size: .8rem; color: var(--muted); }
+.wiki-content .mw-parser-output > :first-child { margin-top: 0; }
+.wiki-attr { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--bd); font-size: .76rem; color: var(--faint); }
+.wiki-attr a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.wiki-hits { list-style: none; display: grid; gap: 6px; }
+.wiki-hits button { display: grid; gap: 2px; width: 100%; text-align: left; padding: 10px 12px; border-radius: var(--rad-sm); background: rgba(255,255,255,.025); border: 1px solid transparent; }
+.wiki-hits button:hover { border-color: var(--bd); }
+.hit-title { font-weight: 600; }
+.hit-snippet { font-size: .82rem; color: var(--muted); }
+.hit-snippet .searchmatch { color: var(--ink); font-weight: 600; }
+
+.fandom-warn { display: grid; gap: 10px; justify-items: start; padding: 16px; border-radius: var(--rad-sm); border: 1px solid rgba(255,200,87,.35); background: rgba(255,200,87,.06); font-size: .92rem; }
+.fandom-warn ul { padding-left: 1.2em; display: grid; gap: 6px; color: #d5d9e6; }
+.fandom-title { font-weight: 700; color: var(--warn); }
+
+/* home game search */
+.game-search { position: relative; margin-top: 22px; max-width: 520px; }
+.search-lg { height: 52px; margin: 0; background: rgba(10,12,20,.7); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+.search-hits { list-style: none; position: absolute; z-index: 25; left: 0; right: 0; top: calc(100% + 6px); max-height: 60vh; overflow-y: auto; padding: 6px;
+  background: rgba(13,15,23,.97); border: 1px solid var(--bd); border-radius: var(--rad); box-shadow: var(--sh); }
+.search-hits li.muted { padding: 10px; font-size: .9rem; }
+.search-hits a { display: flex; align-items: center; gap: 12px; padding: 6px; border-radius: var(--rad-sm); font-weight: 500; font-size: .93rem; }
+.search-hits a:hover, .search-hits a:focus-visible { background: var(--card-hi); }
+.search-hits img { width: 92px; height: 35px; object-fit: cover; border-radius: 4px; background: var(--bg-2); flex: none; }
+.rich > :first-child, .rich .mw-parser-output > :first-child { margin-top: 0; }
+.ach-icon { display: block; }
+/* phones: keep the panel area at least a screen tall, so switching tabs can always scroll the panel to the top */
+@media (max-width: 999px) { .game-grid { min-height: calc(100dvh - var(--nav-h) - 60px); align-content: start; } }
