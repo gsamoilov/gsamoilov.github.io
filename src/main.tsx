@@ -5,7 +5,8 @@ import './styles/pages.css';
 import { TopNav, TabBar, Footer } from './components/Chrome';
 import { Home } from './pages/Home';
 import { Game } from './pages/Game';
-import { Playing, Profile, About } from './pages/Simple';
+import { Playing, About } from './pages/Simple';
+import { Profile } from './pages/Profile';
 import { NotFound } from './pages/NotFound';
 import { AuthSteam } from './pages/AuthSteam';
 

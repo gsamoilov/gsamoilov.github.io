@@ -99,3 +99,53 @@ export interface RecentGame {
   minutes2Weeks: number;
 }
 export const getRecent = (userId: string) => once(`recent:${userId}`, () => callSteam<RecentGame[]>('recent'));
+
+export interface RareAchievement {
+  appid: number;
+  game: string;
+  name: string;
+  description: string;
+  icon: string;
+  percent: number;
+  unlockedAt: number;
+}
+export type ProfileStats =
+  | { state: 'private' }
+  | {
+      state: 'ok';
+      generatedAt: string;
+      totalMinutes: number;
+      gamesOwned: number;
+      gamesPlayed: number;
+      sampledGames: number;
+      avgCompletion: number | null;
+      achievementsEarned: number;
+      perfectGames: number;
+      rarest: RareAchievement[];
+      topGames: { appid: number; name: string; minutes: number }[];
+    };
+export interface FriendInGame {
+  steamid: string;
+  name: string;
+  avatar: string;
+  profileUrl: string;
+  appid: number;
+  game: string;
+}
+export type FriendsNow = { state: 'private' } | { state: 'ok'; total: number; privateCount: number; online: number; inGame: FriendInGame[] };
+export interface PriceInfo {
+  appid: number;
+  title: string;
+  best: { store: string; price: number; retail: number; savings: number; url: string } | null;
+  steam: { price: number; retail: number; savings: number } | null;
+  lowestEver: { price: number; date: number } | null;
+}
+
+export const getProfileStats = (userId: string, refresh = false) => {
+  if (refresh) memo.delete(`profile:${userId}`);
+  return once(`profile:${userId}`, () => callSteam<ProfileStats>('profile', refresh ? { refresh: true } : {}));
+};
+export const getFriendsNow = (userId: string, appid?: number) =>
+  once(`friends:${userId}:${appid ?? 'all'}`, () => callSteam<FriendsNow>('friends', appid ? { appid } : {}));
+export const getPrices = (appids: number[]) =>
+  once(`prices:${[...appids].sort().join(',')}`, () => callSteam<PriceInfo[]>('prices', { appids }));

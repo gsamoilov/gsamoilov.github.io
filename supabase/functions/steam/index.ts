@@ -9,12 +9,17 @@
  * Signed-in actions (Authorization: Bearer <user session>):
  *   me     { appid }            my playtime + achievements (with global rarity)
  *   recent {}                   my recently played games (last 2 weeks)
+ *   profile { refresh? }        my overall stats (playtime, completion, rarest achievements)
+ *   friends { appid? }          friends in a game right now (optionally only this game)
+ * Public:
+ *   prices { appids[] }         current deals via CheapShark (USD)
  *
  * Every Steam response is cached in public.steam_cache. The Steam Web API key never leaves this function.
  */
 import { adminClient } from '../_shared/clients.ts';
 import { corsHeaders, json } from '../_shared/http.ts';
 import { appidOf, game, HttpError, me, news, recent, search, steamidFor, wiki } from './logic.ts';
+import { friendsNow, prices, profileStats } from './profile.ts';
 
 // ---------- router ----------
 
@@ -44,6 +49,14 @@ Deno.serve(async (req) => {
         const steamid = await steamidFor(db, req);
         return json(req, await me(db, steamid, appid));
       }
+      case 'prices': {
+        const ids = (Array.isArray(body.appids) ? body.appids : []).map(appidOf);
+        return json(req, await prices(db, ids));
+      }
+      case 'profile':
+        return json(req, await profileStats(db, await steamidFor(db, req), body.refresh === true));
+      case 'friends':
+        return json(req, await friendsNow(db, await steamidFor(db, req), body.appid ? appidOf(body.appid) : undefined));
       case 'recent':
         return json(req, await recent(db, await steamidFor(db, req)));
       default:

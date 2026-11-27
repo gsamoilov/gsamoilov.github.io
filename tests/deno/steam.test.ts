@@ -18,6 +18,8 @@ function fakeDb() {
         if (table === 'known_playtime') return { data: known.get(`${filters.steamid}:${filters.appid}`) ?? null };
         return { data: null };
       },
+      lt: () => q,
+      delete: () => ({ eq: async (_c: string, v: string) => (cache.delete(v), { error: null }), lt: async () => ({ error: null }) }),
       upsert: async (rows: any) => {
         for (const row of Array.isArray(rows) ? rows : [rows]) {
           if (table === 'steam_cache') cache.set(row.key, row);

@@ -37,6 +37,11 @@ export interface PlayerSummary {
   avatarfull: string;
   profileurl: string;
   communityvisibilitystate: number;
+  /** 0 offline, 1+ online/busy/away… */
+  personastate?: number;
+  /** set while the player is in a game (only visible for public profiles) */
+  gameid?: string;
+  gameextrainfo?: string;
 }
 
 export async function getPlayerSummaries(steamids: string[]): Promise<PlayerSummary[]> {

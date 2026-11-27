@@ -3,9 +3,9 @@ import type { adminClient } from '../_shared/clients.ts';
 import { cached, steamKey } from '../_shared/steamApi.ts';
 import { WIKI_HOSTS } from '../_shared/wikiHosts.ts';
 
-const MIN = 60;
-const HOUR = 3600;
-const UA = 'samoilov.org gaming companion (+https://samoilov.org)';
+export const MIN = 60;
+export const HOUR = 3600;
+export const UA = 'samoilov.org gaming companion (+https://samoilov.org)';
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -19,7 +19,7 @@ export const appidOf = (v: unknown): number => {
   return n;
 };
 
-async function getJson(url: string | URL, init?: RequestInit): Promise<{ status: number; body: any }> {
+export async function getJson(url: string | URL, init?: RequestInit): Promise<{ status: number; body: any }> {
   const res = await fetch(url, { ...init, headers: { 'User-Agent': UA, ...(init?.headers ?? {}) } });
   const text = await res.text();
   let body: any = null;
@@ -31,7 +31,7 @@ async function getJson(url: string | URL, init?: RequestInit): Promise<{ status:
   return { status: res.status, body };
 }
 
-const api = (path: string, params: Record<string, string | number>, withKey = false) => {
+export const api = (path: string, params: Record<string, string | number>, withKey = false) => {
   const u = new URL(`https://api.steampowered.com/${path}`);
   if (withKey) u.searchParams.set('key', steamKey());
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, String(v));
@@ -149,6 +149,40 @@ export async function steamidFor(db: ReturnType<typeof adminClient>, req: Reques
   return prof.steamid;
 }
 
+export interface SchemaAch {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  hidden: boolean;
+}
+
+/** A game's achievement list (names, icons, hidden flag). Cached a day. */
+export function loadSchema(db: ReturnType<typeof adminClient>, appid: number): Promise<SchemaAch[]> {
+  return cached(db, `schema:${appid}`, 24 * HOUR, async () => {
+    const { status, body } = await getJson(api('ISteamUserStats/GetSchemaForGame/v2/', { appid, l: 'english' }, true));
+    if (status !== 200) throw new Error(`schema ${status}`);
+    return ((body?.game?.availableGameStats?.achievements ?? []) as any[]).map((a) => ({
+      id: String(a.name),
+      name: String(a.displayName ?? a.name),
+      description: String(a.description ?? ''),
+      icon: String(a.icon ?? ''),
+      hidden: a.hidden === 1,
+    }));
+  });
+}
+
+/** % of all players who have each achievement. Cached a day. */
+export function loadGlobalPercents(db: ReturnType<typeof adminClient>, appid: number): Promise<Record<string, number>> {
+  return cached(db, `globalach:${appid}`, 24 * HOUR, async () => {
+    const { status, body } = await getJson(api('ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/', { gameid: appid }));
+    if (status !== 200) return {} as Record<string, number>;
+    const out: Record<string, number> = {};
+    for (const a of body?.achievementpercentages?.achievements ?? []) out[a.name] = Number(a.percent);
+    return out;
+  });
+}
+
 /** Parses Steam Community's achievements XML (fallback when the Web API refuses, e.g. Family Library games). */
 export function parseCommunityAchievementsXml(xml: string): Record<string, number> | null {
   if (!/<playerstats>/i.test(xml) || /<error>/i.test(xml)) return null;
@@ -248,26 +282,10 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
   }
   diag.playtimeSource = playtimeSource;
 
-  const schema = await cached(db, `schema:${appid}`, 24 * HOUR, async () => {
-    const { status, body } = await getJson(api('ISteamUserStats/GetSchemaForGame/v2/', { appid, l: 'english' }, true));
-    if (status !== 200) throw new Error(`schema ${status}`);
-    return ((body?.game?.availableGameStats?.achievements ?? []) as any[]).map((a) => ({
-      id: String(a.name),
-      name: String(a.displayName ?? a.name),
-      description: String(a.description ?? ''),
-      icon: String(a.icon ?? ''),
-      hidden: a.hidden === 1,
-    }));
-  });
+  const schema = await loadSchema(db, appid);
   diag.schemaAchievements = schema.length;
 
-  const global = await cached(db, `globalach:${appid}`, 24 * HOUR, async () => {
-    const { status, body } = await getJson(api('ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/', { gameid: appid }));
-    if (status !== 200) return {} as Record<string, number>;
-    const out: Record<string, number> = {};
-    for (const a of body?.achievementpercentages?.achievements ?? []) out[a.name] = Number(a.percent);
-    return out;
-  });
+  const global = await loadGlobalPercents(db, appid);
 
   // 3. Achievements: Web API first; if it refuses while the profile is public, try the Community XML page.
   let player: PlayerAch = { state: 'nostats' };

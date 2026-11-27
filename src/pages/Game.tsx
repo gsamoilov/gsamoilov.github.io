@@ -7,11 +7,13 @@ import { useAuth } from '../lib/auth';
 import { setPlaying, usePlaying } from '../lib/playing';
 import { formatCount, formatPlaytime, useAsync } from '../lib/useAsync';
 import { Poster } from '../components/Poster';
-import { IconBook, IconClock, IconNews, IconNote, IconPlay, IconTrophy } from '../components/Icons';
+import { IconBook, IconClock, IconNews, IconNote, IconPlay, IconTrophy, IconUsers } from '../components/Icons';
 import { Wiki, useWikiMatch } from '../components/game/Wiki';
 import { Achievements, Diagnostics } from '../components/game/Achievements';
 import { Notes } from '../components/game/Notes';
 import { News } from '../components/game/News';
+import { PriceLine } from '../components/Price';
+import { FriendsHere } from '../components/Friends';
 import { NotFound } from './NotFound';
 
 type Tab = 'wiki' | 'achievements' | 'notes' | 'news';
@@ -155,6 +157,7 @@ export function Game() {
               <PlayingToggle appid={appid} name={name ?? ''} userId={userId} />
               <a class="btn btn-ghost btn-sm" href={steamStoreUrl(appid)} target="_blank" rel="noopener">Store page</a>
             </div>
+            <PriceLine appid={appid} name={name ?? ''} userId={userId} />
           </div>
         </div>
       </section>
@@ -194,6 +197,12 @@ export function Game() {
         <aside class={show('notes')} aria-label="Where I left off">
           <div class="panel-head"><IconNote class="ic" /><h2>Where I left off</h2></div>
           <Notes appid={appid} userId={userId} />
+          {userId && (
+            <div class="friends-here">
+              <h3 class="sub-head"><IconUsers class="ic" /> Friends playing this now</h3>
+              <FriendsHere appid={appid} userId={userId} />
+            </div>
+          )}
         </aside>
 
         <section class={`${show('news')} news`} aria-label="Patch notes">

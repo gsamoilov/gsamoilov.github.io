@@ -273,3 +273,48 @@
 .jb-time { font-size: .78rem; color: var(--muted); }
 .playing-page { padding-top: 16px; display: grid; gap: 24px; }
 .playing-page .empty-page { min-height: 40vh; }
+
+/* ---------- phase 5: profile, friends, prices ---------- */
+.profile-section { display: grid; gap: 10px; }
+.section-title { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.card.pad { padding: 16px; display: grid; gap: 10px; }
+.stats-card { padding: 16px; display: grid; gap: 14px; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 760px) { .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.big-stat { display: grid; gap: 2px; padding: 14px; border-radius: var(--rad-sm); background: rgba(255,255,255,.04); border: 1px solid var(--bd); }
+.big-stat b { font-size: clamp(1.6rem, 6vw, 2.2rem); letter-spacing: -.03em; line-height: 1.1; }
+.big-stat span { display: flex; align-items: center; gap: 5px; font-size: .78rem; color: var(--muted); }
+.sub-head { display: flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rare-list { list-style: none; display: grid; gap: 6px; }
+.rare-list li { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 6px; border-radius: var(--rad-sm); background: rgba(255,255,255,.025); }
+.rare-list img, .rare-list .ach-icon { width: 40px; height: 40px; border-radius: 8px; background: var(--bg-2); }
+.rare-text { min-width: 0; display: grid; }
+.rare-name { font-weight: 600; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rare-game { font-size: .8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-games { padding-left: 1.4em; display: grid; gap: 4px; font-size: .92rem; }
+.top-games li a { margin-right: 8px; }
+.top-games li a:hover { color: var(--acc-solid); }
+
+.friends-here { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--bd); display: grid; gap: 8px; }
+.friend-list { list-style: none; display: grid; gap: 6px; }
+.friend { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.friend > a:first-child { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.friend img { width: 32px; height: 32px; border-radius: 8px; background: var(--bg-2); flex: none; }
+.friend-name { font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.friend-game { font-size: .82rem; color: var(--good); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%; }
+
+.price-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; font-size: .88rem; color: var(--muted); }
+.price-line > .ic { color: var(--muted); }
+.price-best { color: var(--ink); }
+.price-best b { font-weight: 700; }
+.price-best:hover { color: var(--acc-solid); }
+.price-cut { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: rgba(124,245,196,.15); color: var(--good); font-weight: 700; font-size: .78rem; }
+.watch-list { list-style: none; display: grid; gap: 6px; }
+.watch-list li { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name x' 'price price'; gap: 2px 10px; padding: 10px 12px; border-radius: var(--rad-sm); background: rgba(255,255,255,.025); border: 1px solid transparent; }
+@media (min-width: 700px) { .watch-list li { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'name price x'; align-items: center; } }
+.watch-list li.is-low { border-color: rgba(124,245,196,.35); }
+.watch-name { grid-area: name; font-weight: 600; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watch-price { grid-area: price; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: .86rem; }
+.watch-price .pill { height: 22px; font-size: .72rem; }
+.watch-remove { grid-area: x; width: 28px; height: 28px; border-radius: 50%; color: var(--faint); }
+.watch-remove:hover { color: var(--bad); background: rgba(255,107,122,.1); }
