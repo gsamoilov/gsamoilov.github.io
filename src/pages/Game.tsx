@@ -104,8 +104,14 @@ export function Game() {
     : !stats || stats.owned || !stats.profileVisible
       ? 'your playtime'
       : stats.familyOrBorrowed
-        ? 'family library'
+        ? 'family game'
         : 'not in library';
+  const playtimeTitle =
+    stats?.familyOrBorrowed && !stats.playtimeKnown
+      ? "Steam only shares playtime for Family Library games you've played in the last 2 weeks"
+      : stats && !stats.profileVisible
+        ? 'Your Steam game details are private'
+        : 'Your total playtime';
 
   return (
     <>
@@ -129,7 +135,7 @@ export function Game() {
                 <b><span class="dot live" /> {players !== null ? formatCount(players) : dash}</b>
                 <span>playing now</span>
               </div>
-              <div class="stat" title={stats && !stats.profileVisible ? 'Your Steam game details are private' : 'Your total playtime'}>
+              <div class="stat" title={playtimeTitle}>
                 <b><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : dash}</b>
                 <span>{playtimeLabel}</span>
               </div>

@@ -194,6 +194,8 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
       return ((body?.response?.games ?? []) as any[]).map((g) => ({ appid: Number(g.appid), minutes: Number(g.playtime_forever ?? 0) }));
     }).catch(() => []);
     const g = recent.find((x) => x.appid === appid);
+    diag.recentlyPlayedCount = recent.length;
+    diag.inRecentlyPlayed = !!g;
     if (g) {
       playtimeMinutes = g.minutes;
       playtimeSource = 'recent';
@@ -264,11 +266,15 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
     };
   });
   const earned = achievements.filter((a) => a.achieved).length;
+  // Steam answers achievement requests even for games you never owned (all locked), so that alone proves nothing.
+  // Only call it a Family Library game if there's real evidence you played it: recent playtime or unlocked achievements.
+  const playedWithoutOwning = owned.visible && !owned.owned && (playtimeSource === 'recent' || earned > 0);
+  diag.playedWithoutOwning = playedWithoutOwning;
 
   return {
     profileVisible: owned.visible,
     owned: owned.owned,
-    familyOrBorrowed: owned.visible && !owned.owned && (playtimeSource === 'recent' || player.state === 'ok'),
+    familyOrBorrowed: playedWithoutOwning,
     playtimeMinutes,
     playtimeKnown: playtimeSource !== 'none',
     achievementsState: player.state,

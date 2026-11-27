@@ -76,12 +76,16 @@ export function Achievements({ signedIn, me }: { signedIn: boolean; me: Async<My
   if (d.achievementsState === 'unavailable') {
     return (
       <div class="panel-empty">
-        <p>Steam won't share your achievements for this game.</p>
-        <p class="muted small">
-          Your profile is public, so this usually means it's a <b>Family Library</b> game you haven't played in the last two
-          weeks, or one you don't own. Play it for a bit and check back.
-        </p>
+        <p>Steam won't share your achievements for this game right now.</p>
+        <p class="muted small">Your profile is public, so this is on Steam's side. Try again later.</p>
       </div>
+    );
+  }
+  if (d.profileVisible && !d.owned && !d.familyOrBorrowed && d.achievementsEarned === 0 && d.achievementsTotal > 0) {
+    return (
+      <p class="panel-empty muted">
+        This game isn't in your library and Steam shows no achievements or recent play from you. It has {d.achievementsTotal} achievements to go for.
+      </p>
     );
   }
   if (d.achievementsState === 'nostats' || d.achievementsTotal === 0) return <p class="panel-empty muted">This game has no Steam achievements.</p>;

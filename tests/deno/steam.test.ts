@@ -155,3 +155,28 @@ Deno.test('me: public profile but Steam refuses everything -> "unavailable", nev
   const r = await me(fakeDb(), '76561197960287930', 10);
   assertEquals([r.profileVisible, r.achievementsState, r.playtimeKnown], [true, 'unavailable', false]);
 });
+
+Deno.test('me: game you never owned or played is not labelled Family Library', async () => {
+  stubFetch([
+    [/GetOwnedGames/, 200, { response: { game_count: 120, games: [] } }],
+    [/GetRecentlyPlayedGames/, 200, { response: { total_count: 1, games: [{ appid: 99, playtime_forever: 10 }] } }],
+    [/GetSchemaForGame/, 200, SCHEMA],
+    [/GetGlobalAchievementPercentages/, 200, GLOBAL],
+    // Steam happily returns "all locked" for a game you don't have
+    [/GetPlayerAchievements/, 200, { playerstats: { success: true, achievements: [{ apiname: 'ACH_EASY', achieved: 0 }, { apiname: 'ACH_BOSS', achieved: 0 }, { apiname: 'ACH_DONE', achieved: 0 }] } }],
+  ]);
+  const r = await me(fakeDb(), '76561197960287930', 10);
+  assertEquals([r.owned, r.familyOrBorrowed, r.playtimeKnown, r.achievementsEarned], [false, false, false, 0]);
+});
+
+Deno.test('me: family game with earned achievements but no recent play -> family, playtime unknown', async () => {
+  stubFetch([
+    [/GetOwnedGames/, 200, { response: { game_count: 120, games: [] } }],
+    [/GetRecentlyPlayedGames/, 200, { response: { total_count: 0 } }],
+    [/GetSchemaForGame/, 200, SCHEMA],
+    [/GetGlobalAchievementPercentages/, 200, GLOBAL],
+    [/GetPlayerAchievements/, 200, { playerstats: { success: true, achievements: [{ apiname: 'ACH_EASY', achieved: 1, unlocktime: 5 }] } }],
+  ]);
+  const r = await me(fakeDb(), '76561197960287930', 10);
+  assertEquals([r.owned, r.familyOrBorrowed, r.playtimeKnown, r.achievementsEarned], [false, true, false, 1]);
+});
