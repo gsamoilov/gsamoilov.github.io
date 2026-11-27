@@ -336,3 +336,26 @@
 .igdb-grid { display: grid; gap: 16px; margin-top: 16px; }
 .igdb-side { display: grid; gap: 16px; align-content: start; }
 @media (min-width: 1000px) { .igdb-grid { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }
+
+/* ---------- phase 6: PlayStation / Xbox ---------- */
+.linked-grid { display: grid; gap: 10px; }
+@media (min-width: 860px) { .linked-grid { grid-template-columns: 1fr 1fr; } .linked-grid > p { grid-column: 1 / -1; } }
+.linked-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.linked-head .btn { margin-left: auto; }
+.link-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.text-input { flex: 1; min-width: 160px; height: 38px; padding: 0 12px; border-radius: var(--rad-sm); background: rgba(0,0,0,.3); border: 1px solid var(--bd); font-size: 1rem; outline: 0; }
+.text-input:focus { border-color: rgba(124,245,196,.5); }
+.form-err { width: 100%; color: var(--bad); font-size: .85rem; }
+.link-steps { display: grid; gap: 8px; }
+.link-code { font: 700 1.4rem/1.2 var(--mono); letter-spacing: .08em; color: var(--acc-solid); padding: 10px 12px; border-radius: var(--rad-sm); background: rgba(124,245,196,.08); border: 1px dashed rgba(124,245,196,.4); user-select: all; justify-self: start; }
+.console-lib { display: grid; gap: 6px; }
+.console-games { list-style: none; display: grid; gap: 4px; }
+.console-games li { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; }
+.console-games img, .console-games .ach-icon { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--bg-2); }
+.cg-name { font-size: .9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-meta { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.console-progress-wrap { display: grid; gap: 12px; margin-top: 14px; }
+.console-progress { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--bd); }
+.cp-line { font-size: .9rem; }
+.trophy-kind { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-left: 4px; }
+.trophy-kind.platinum { color: #b6c7ff; } .trophy-kind.gold { color: #ffc857; } .trophy-kind.silver { color: #c9ced9; } .trophy-kind.bronze { color: #d89a6a; }

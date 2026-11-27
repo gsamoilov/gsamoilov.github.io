@@ -139,6 +139,15 @@ export async function wiki(db: ReturnType<typeof adminClient>, apiUrl: string, p
 
 // ---------- signed-in ----------
 
+/** The signed-in user's id from the Authorization header. */
+export async function userIdFor(db: ReturnType<typeof adminClient>, req: Request): Promise<string> {
+  const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!token) throw new HttpError(401, 'Sign in to see this.');
+  const { data, error } = await db.auth.getUser(token);
+  if (error || !data?.user) throw new HttpError(401, 'Sign in to see this.');
+  return data.user.id;
+}
+
 export async function steamidFor(db: ReturnType<typeof adminClient>, req: Request): Promise<string> {
   const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) throw new HttpError(401, 'Sign in to see this.');

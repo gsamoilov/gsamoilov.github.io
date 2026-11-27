@@ -13,6 +13,10 @@
  *   recent {}                   my recently played games (last 2 weeks)
  *   profile { refresh? }        my overall stats (playtime, completion, rarest achievements)
  *   friends { appid? }          friends in a game right now (optionally only this game)
+ *   link-start { platform, handle }   PSN/Xbox: get a code to put in About me / bio
+ *   link-verify { platform }          PSN/Xbox: check the code and link the account
+ *   console-library { platform }      PSN/Xbox: games with hours (PSN) and trophy/achievement progress
+ *   console-achievements { platform, ref, service? }  trophies/achievements for one title
  * Public:
  *   prices { appids[] }         current deals via CheapShark (USD)
  *
@@ -20,7 +24,9 @@
  */
 import { adminClient } from '../_shared/clients.ts';
 import { corsHeaders, json } from '../_shared/http.ts';
-import { appidOf, game, HttpError, me, news, recent, steamidFor, wiki } from './logic.ts';
+import { appidOf, game, HttpError, me, news, recent, steamidFor, userIdFor, wiki } from './logic.ts';
+import { psnLibrary, psnLinkStart, psnLinkVerify, psnTrophies } from './psn.ts';
+import { xboxAchievements, xboxLibrary, xboxLinkStart, xboxLinkVerify } from './xbox.ts';
 import { friendsNow, prices, profileStats } from './profile.ts';
 import { igdbGame, popular, searchGames, trending } from './catalog.ts';
 
@@ -67,6 +73,32 @@ Deno.serve(async (req) => {
         return json(req, await profileStats(db, await steamidFor(db, req), body.refresh === true));
       case 'friends':
         return json(req, await friendsNow(db, await steamidFor(db, req), body.appid ? appidOf(body.appid) : undefined));
+      case 'link-start': {
+        const uid = await userIdFor(db, req);
+        const handle = String(body.handle ?? '');
+        if (body.platform === 'psn') return json(req, await psnLinkStart(db, uid, handle));
+        if (body.platform === 'xbox') return json(req, await xboxLinkStart(db, uid, handle));
+        throw new HttpError(400, 'bad platform');
+      }
+      case 'link-verify': {
+        const uid = await userIdFor(db, req);
+        if (body.platform === 'psn') return json(req, await psnLinkVerify(db, uid));
+        if (body.platform === 'xbox') return json(req, await xboxLinkVerify(db, uid));
+        throw new HttpError(400, 'bad platform');
+      }
+      case 'console-library': {
+        const uid = await userIdFor(db, req);
+        if (body.platform === 'psn') return json(req, await psnLibrary(db, uid));
+        if (body.platform === 'xbox') return json(req, await xboxLibrary(db, uid));
+        throw new HttpError(400, 'bad platform');
+      }
+      case 'console-achievements': {
+        const uid = await userIdFor(db, req);
+        const ref = String(body.ref ?? '');
+        if (body.platform === 'psn') return json(req, await psnTrophies(db, uid, ref, String(body.service ?? '')));
+        if (body.platform === 'xbox') return json(req, await xboxAchievements(db, uid, ref));
+        throw new HttpError(400, 'bad platform');
+      }
       case 'recent':
         return json(req, await recent(db, await steamidFor(db, req)));
       default:

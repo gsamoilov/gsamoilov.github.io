@@ -7,6 +7,7 @@
  */
 import { adminClient } from '../_shared/clients.ts';
 import { fetchRecentlyPlayed, rememberPlaytime } from '../steam/logic.ts';
+import { psnDaysLeft } from '../steam/psn.ts';
 
 function sameSecret(a: string, b: string): boolean {
   const x = new TextEncoder().encode(a);
@@ -46,7 +47,10 @@ Deno.serve(async (req) => {
     }
     if (!data || data.length < 500) break;
   }
-  const summary = { users, games, failed };
+  // PlayStation token health, so the scheduled workflow can warn the owner before it expires
+  const psnConfigured = !!Deno.env.get('PSN_NPSSO');
+  const psn = psnConfigured ? { configured: true, daysLeft: await psnDaysLeft(db) } : { configured: false, daysLeft: null };
+  const summary = { users, games, failed, psn };
   console.log('refresh-playtime', summary);
   return new Response(JSON.stringify(summary), { headers: { 'Content-Type': 'application/json' } });
 });

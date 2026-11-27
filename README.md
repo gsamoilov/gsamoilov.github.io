@@ -19,7 +19,11 @@ npm run build   # outputs dist/ (404.html = index.html so deep links work on Pag
 - `supabase/functions/_shared` – OpenID helpers (unit-tested in `tests/`), Steam API + cache, CORS.
 
 Build-time variables (GitHub → Settings → Secrets and variables → Actions → **Variables**): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_PROJECT_REF`.
-Secrets (same page → **Secrets**): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`. The Steam key is a **Supabase** secret (`STEAM_API_KEY`), not a GitHub one.
+Secrets (same page → **Secrets**): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `CRON_SECRET`.
+
+Supabase Edge Function secrets: `STEAM_API_KEY`, `CRON_SECRET`, `IGDB_CLIENT_ID` + `IGDB_CLIENT_SECRET` (Twitch app, for search),
+`PSN_NPSSO` (token of a dedicated PlayStation account; renew about every 2 months, the daily workflow warns you),
+`OPENXBL_API_KEY` (xbl.io personal key; free tier 150 requests/hour, budgeted at 140).
 
 ## Wikis
 

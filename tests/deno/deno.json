@@ -1,1 +1,1 @@
-{ "compilerOptions": { "lib": ["deno.ns", "deno.window", "esnext", "dom"] } }
+{ "nodeModulesDir": "none", "compilerOptions": { "lib": ["deno.ns", "deno.window", "esnext", "dom"] } }

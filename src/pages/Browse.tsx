@@ -10,6 +10,7 @@ import { Wiki, useWikiMatch } from '../components/game/Wiki';
 import { Notes } from '../components/game/Notes';
 import { IconBook, IconNote, IconPlay } from '../components/Icons';
 import { NotFound } from './NotFound';
+import { ConsoleProgress } from '../components/Consoles';
 
 /** /search?q=… — full results from every platform. */
 export function SearchPage() {
@@ -167,9 +168,15 @@ export function IgdbGamePage() {
             <div class="panel-head"><IconNote class="ic" /><h2>Where I left off</h2></div>
             <Notes appid={id} platform="igdb" userId={userId} />
           </div>
-          <p class="muted small">
-            This game isn't on Steam, so there are no Steam stats here. PlayStation and Xbox progress will show here once you link those accounts.
-          </p>
+          {userId ? (
+            <div class="panel is-active" aria-label="Your progress">
+              <div class="panel-head"><h2>Your progress</h2></div>
+              <ConsoleProgress userId={userId} gameName={d.name} />
+              <p class="muted small">Shows PlayStation / Xbox progress if you've linked those accounts on your profile and played this game.</p>
+            </div>
+          ) : (
+            <p class="muted small">Sign in and link PlayStation or Xbox on your profile to see your progress here.</p>
+          )}
         </aside>
       </div>
     </>

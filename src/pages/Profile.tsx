@@ -3,6 +3,7 @@ import { SteamButton } from '../components/SteamButton';
 import { IconClock, IconTag, IconTrophy, IconUser, IconUsers } from '../components/Icons';
 import { FriendsPlaying } from '../components/Friends';
 import { PriceWatch } from '../components/Price';
+import { LinkedAccounts } from '../components/Consoles';
 import { signOut, useAuth } from '../lib/auth';
 import { useAsync, formatPlaytime, timeAgo } from '../lib/useAsync';
 import { getProfileStats, type ProfileStats } from '../platform/steamClient';
@@ -133,7 +134,12 @@ export function Profile() {
       </div>
 
       <section class="profile-section">
-        <h2 class="section-title"><IconTrophy class="ic" /> Stats</h2>
+        <h2 class="section-title"><IconUser class="ic" /> PlayStation &amp; Xbox</h2>
+        <LinkedAccounts userId={userId} />
+      </section>
+
+      <section class="profile-section">
+        <h2 class="section-title"><IconTrophy class="ic" /> Steam stats</h2>
         <StatsCard userId={userId} name={name} avatar={profile?.avatar_url ?? ''} />
       </section>
 

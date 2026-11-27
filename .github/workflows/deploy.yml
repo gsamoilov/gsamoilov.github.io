@@ -29,7 +29,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Edge Function tests (Deno)
-        run: deno test --allow-env --config tests/deno/deno.json tests/deno/
+        run: deno test --allow-env --allow-read --config tests/deno/deno.json tests/deno/
       - run: npm run build
         env:
           # Public values, stored as repository *variables* (not secrets): Settings > Secrets and variables > Actions > Variables

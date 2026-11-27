@@ -14,6 +14,7 @@ import { Notes } from '../components/game/Notes';
 import { News } from '../components/game/News';
 import { PriceLine } from '../components/Price';
 import { FriendsHere } from '../components/Friends';
+import { ConsoleProgress } from '../components/Consoles';
 import { NotFound } from './NotFound';
 
 type Tab = 'wiki' | 'achievements' | 'notes' | 'news';
@@ -186,6 +187,7 @@ export function Game() {
         <aside class={show('achievements')} aria-label="Missed achievements">
           <div class="panel-head"><IconTrophy class="ic" /><h2>Missed achievements</h2></div>
           <Achievements signedIn={!!userId} me={me} />
+          {userId && name && <ConsoleProgress userId={userId} gameName={name} />}
           <Diagnostics me={me} />
         </aside>
 

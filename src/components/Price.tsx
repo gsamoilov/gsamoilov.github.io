@@ -7,7 +7,7 @@ import { IconTag } from './Icons';
 export const usd = (n: number) => (n === 0 ? 'Free' : `$${n.toFixed(2)}`);
 
 export function PriceSummary({ p }: { p: PriceInfo }) {
-  if (!p.best) return <span class="muted">No current deals tracked</span>;
+  if (!p?.best) return <span class="muted">No current deals tracked</span>;
   return (
     <>
       <a class="price-best" href={p.best.url} target="_blank" rel="noopener sponsored">
@@ -21,7 +21,7 @@ export function PriceSummary({ p }: { p: PriceInfo }) {
 
 /** Game page: best current price + Watch toggle. */
 export function PriceLine({ appid, name, userId }: { appid: number; name: string; userId: string | null }) {
-  const price = useAsync(() => getPrices([appid]).then((r) => r[0]), [appid]);
+  const price = useAsync(() => getPrices([appid]).then((r) => r?.[0] ?? null), [appid]);
   const watch = useWatchlist();
   const [busy, setBusy] = useState(false);
   const watched = watch.isWatched(appid);
@@ -29,9 +29,7 @@ export function PriceLine({ appid, name, userId }: { appid: number; name: string
     <div class="price-line">
       <IconTag class="ic" />
       {price.status === 'ok' ? (
-        <span>
-          <PriceSummary p={price.data} />
-        </span>
+        <span>{price.data ? <PriceSummary p={price.data} /> : <span class="muted">No price info</span>}</span>
       ) : price.status === 'error' ? (
         <span class="muted">Prices unavailable</span>
       ) : (
