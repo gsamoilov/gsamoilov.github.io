@@ -7,6 +7,7 @@ import { Home } from './pages/Home';
 import { Game } from './pages/Game';
 import { Playing, Profile, About } from './pages/Simple';
 import { NotFound } from './pages/NotFound';
+import { AuthSteam } from './pages/AuthSteam';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/playing" component={Playing} />
           <Route path="/profile" component={Profile} />
           <Route path="/about" component={About} />
+          <Route path="/auth/steam" component={AuthSteam} />
           <Route default component={NotFound} />
         </Router>
       </main>

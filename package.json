@@ -9,6 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.2",
     "preact": "^11.2.0",
     "preact-iso": "^2.12.2"
   },

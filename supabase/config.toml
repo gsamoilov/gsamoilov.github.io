@@ -1,0 +1,7 @@
+project_id = "samoilov-org"
+
+# Only the settings this project relies on. The rest uses Supabase defaults.
+[functions.steam-auth]
+# Called by signed-OUT browsers, so it can't require a Supabase JWT.
+# It authenticates the user itself by verifying the Steam OpenID response.
+verify_jwt = false
