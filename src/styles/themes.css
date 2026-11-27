@@ -1,0 +1,100 @@
+/* Saved theme pack from the old samoilov.org themes page (see archive/themes-demo.html).
+   NOT loaded yet. Every theme sets the same tokens the new site uses (--bg, --ink, --card, --bd, --acc ...),
+   so a future theme switcher only needs to import this file and set <html data-theme="...">. */
+:root,[data-theme="ember"]{
+  --bg:#0c0705;--ink:#fff4e8;--muted:#b9a08c;
+  --card:rgba(255,100,20,.07);--bd:rgba(255,150,60,.35);--bw:1px;--blur:blur(10px);--rad:18px;
+  --sh:0 0 40px rgba(255,80,0,.14);--spec:rgba(255,170,60,.2);
+  --acc:linear-gradient(100deg,#ffb703,#ff6b00 55%,#ff3d1f);--accink:#1a0a04;--pill:99px;
+  --font:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+[data-theme="glass"]{
+  --bg:#150812;--ink:#fff;--muted:rgba(255,255,255,.72);
+  --card:rgba(255,255,255,.12);--bd:rgba(255,255,255,.3);--bw:1px;--blur:blur(28px) saturate(190%);--rad:32px;
+  --sh:0 20px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.1);--spec:rgba(255,255,255,.28);
+  --acc:linear-gradient(100deg,rgba(255,255,255,.5),rgba(255,255,255,.2));--accink:#fff;--pill:99px;
+}
+[data-theme="brutal"]{
+  --bg:#ffd93d;--ink:#111;--muted:#3b3317;
+  --card:#fff;--bd:#111;--bw:3px;--blur:none;--rad:0;
+  --sh:8px 8px 0 #111;--spec:transparent;--acc:#ff4d1f;--accink:#111;--pill:0;
+}
+[data-theme="terminal"]{
+  --bg:#020a04;--ink:#47ff86;--muted:#2fae5c;
+  --card:rgba(0,40,12,.5);--bd:#1f8f45;--bw:1px;--blur:none;--rad:2px;
+  --sh:0 0 24px rgba(71,255,134,.18);--spec:rgba(71,255,134,.12);--acc:#47ff86;--accink:#021a0a;--pill:2px;
+  --font:"Space Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+[data-theme="space"]{
+  --bg:#04061a;--ink:#e9eeff;--muted:#8e9ccf;
+  --card:rgba(20,24,70,.45);--bd:rgba(130,150,255,.35);--bw:1px;--blur:blur(14px);--rad:20px;
+  --sh:0 0 40px rgba(90,100,255,.18);--spec:rgba(150,170,255,.22);
+  --acc:linear-gradient(100deg,#6ee7ff,#8b7bff,#d28bff);--accink:#070a22;--pill:99px;
+}
+[data-theme="web"]{
+  --bg:#08080f;--ink:#ececf8;--muted:#9a9ab8;
+  --card:rgba(255,255,255,.04);--bd:rgba(200,200,255,.28);--bw:1px;--blur:blur(6px);--rad:6px;
+  --sh:0 0 30px rgba(160,160,255,.1);--spec:rgba(200,200,255,.15);
+  --acc:linear-gradient(100deg,#f2f2ff,#9a9aff);--accink:#0a0a18;--pill:6px;
+}
+[data-theme="blueprint"]{
+  --bg:#0b3d91;--ink:#fff;--muted:rgba(255,255,255,.78);
+  --card:rgba(255,255,255,.06);--bd:rgba(255,255,255,.7);--bw:1.5px;--blur:none;--rad:2px;
+  --sh:none;--spec:rgba(255,255,255,.16);--acc:#fff;--accink:#0b3d91;--pill:2px;
+  --font:"Space Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+[data-theme="synth"]{
+  --bg:#12002b;--ink:#ffe9ff;--muted:#d9a8ff;
+  --card:rgba(50,0,90,.5);--bd:#ff3df2;--bw:1.5px;--blur:blur(8px);--rad:10px;
+  --sh:0 0 22px rgba(255,61,242,.45),inset 0 0 18px rgba(255,61,242,.15);--spec:rgba(0,229,255,.2);
+  --acc:linear-gradient(100deg,#00e5ff,#ff3df2);--accink:#12002b;--pill:10px;
+}
+
+[data-theme="aurora"]{
+  --bg:#040d14;--ink:#e8fff6;--muted:#8fc7b4;
+  --card:rgba(8,40,48,.42);--bd:rgba(120,255,210,.3);--bw:1px;--blur:blur(16px) saturate(140%);--rad:22px;
+  --sh:0 0 44px rgba(80,255,190,.12);--spec:rgba(130,255,220,.2);
+  --acc:linear-gradient(100deg,#5dffb0,#6ea8ff 55%,#c084ff);--accink:#03140f;--pill:99px;
+}
+[data-theme="compass"]{
+  --bg:#f1e9d6;--ink:#2b2118;--muted:#6b5d49;
+  --card:rgba(255,251,240,.78);--bd:#2b2118;--bw:1px;--blur:none;--rad:4px;
+  --sh:3px 3px 0 rgba(43,33,24,.22);--spec:rgba(255,190,100,.3);
+  --acc:#2b2118;--accink:#f1e9d6;--pill:4px;
+  --font:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+}
+[data-theme="abyss"]{
+  --bg:#020912;--ink:#dff9ff;--muted:#7fb6c6;
+  --card:rgba(0,36,56,.42);--bd:rgba(60,220,255,.3);--bw:1px;--blur:blur(14px);--rad:28px;
+  --sh:0 0 40px rgba(20,200,255,.13),inset 0 0 30px rgba(20,200,255,.05);--spec:rgba(60,230,255,.22);
+  --acc:linear-gradient(100deg,#19e3ff,#2a7bff);--accink:#001322;--pill:99px;
+}
+[data-theme="radar"]{
+  --bg:#0b0800;--ink:#ffcf6b;--muted:#b58a2e;
+  --card:rgba(46,30,0,.5);--bd:rgba(255,176,0,.5);--bw:1px;--blur:none;--rad:12px;
+  --sh:0 0 26px rgba(255,176,0,.16),inset 0 0 20px rgba(255,176,0,.06);--spec:rgba(255,190,40,.16);
+  --acc:#ffb000;--accink:#1a1000;--pill:12px;
+  --font:"Space Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+
+[data-theme="aero"]{
+  --bg:#8fd3ff;--ink:#0b3a5e;--muted:#2d6288;
+  --card:rgba(255,255,255,.34);--bd:rgba(255,255,255,.9);--bw:1.5px;--blur:blur(12px) saturate(165%);--rad:26px;
+  --sh:0 10px 30px rgba(20,110,190,.28),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -12px 26px rgba(120,220,255,.3);--spec:rgba(255,255,255,.3);
+  --acc:linear-gradient(#b5f5ff 0%,#3cb8f2 48%,#1b92dc 52%,#5cd2ff 100%);--accink:#fff;--pill:99px;
+  --font:"Segoe UI","Frutiger","Trebuchet MS","Helvetica Neue",Arial,sans-serif;
+}
+
+html[data-theme="glass"]{background:linear-gradient(160deg,#2a0d1c,#150812 55%,#1a0d2e)}
+html[data-theme="space"]{background:radial-gradient(ellipse at 75% 15%,#1d1160,transparent 55%),radial-gradient(ellipse at 15% 85%,#0b2a5c,transparent 50%),#04061a}
+html[data-theme="synth"]{background:linear-gradient(#1a0033,#3a0057 58%,#12002b 58%)}
+html[data-theme="aurora"]{background:radial-gradient(ellipse at 50% 120%,#0a2a3a,transparent 60%),#040d14}
+html[data-theme="abyss"]{background:linear-gradient(#03121f,#020912 60%,#01040a)}
+html[data-theme="compass"]{background:radial-gradient(ellipse at 50% 30%,#f7f0de,#e9dfc6)}
+html[data-theme="aero"]{background:
+  radial-gradient(circle at 10% 6%,rgba(255,255,225,.95),rgba(255,255,200,.35) 9%,transparent 24%),
+  radial-gradient(ellipse 26% 9% at 24% 24%,rgba(255,255,255,.85),transparent 70%),radial-gradient(ellipse 30% 10% at 72% 16%,rgba(255,255,255,.75),transparent 70%),
+  radial-gradient(ellipse 22% 8% at 52% 38%,rgba(255,255,255,.6),transparent 70%),
+  radial-gradient(ellipse 120% 34% at 25% 108%,#58cc4a 0,#3aa845 55%,transparent 72%),radial-gradient(ellipse 100% 28% at 90% 110%,#2fae55 0,#1f8a48 55%,transparent 72%),
+  linear-gradient(#3fa9f5 0%,#86d0ff 42%,#d6f3ff 72%,#e8fff0 100%)}
+html[data-theme="blueprint"]{background:radial-gradient(ellipse at 50% 30%,#1457c4,#0b3d91 70%)}
