@@ -227,3 +227,4 @@
 .ach-icon { display: block; }
 /* phones: keep the panel area at least a screen tall, so switching tabs can always scroll the panel to the top */
 @media (max-width: 999px) { .game-grid { min-height: calc(100dvh - var(--nav-h) - 60px); align-content: start; } }
+.diag { margin-top: 14px; padding: 10px; border-radius: 8px; background: rgba(0,0,0,.4); border: 1px dashed var(--bd); font: .72rem/1.4 var(--mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -55,8 +55,12 @@ export interface MyAchievement {
 export interface MyGameStats {
   profileVisible: boolean;
   owned: boolean;
+  /** played through Steam Families (not in your own library) */
+  familyOrBorrowed: boolean;
   playtimeMinutes: number;
-  achievementsState: 'ok' | 'private' | 'nostats';
+  playtimeKnown: boolean;
+  achievementsState: 'ok' | 'private' | 'nostats' | 'unavailable';
+  diagnostics?: Record<string, unknown>;
   achievementsTotal: number;
   achievementsEarned: number;
   achievements: MyAchievement[];

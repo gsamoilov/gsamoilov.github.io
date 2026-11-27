@@ -34,6 +34,13 @@ function Row({ a }: { a: MyAchievement }) {
   );
 }
 
+/** Add ?debug to the game page URL to see what Steam answered (no secrets in here). */
+export function Diagnostics({ me }: { me: Async<MyGameStats> }) {
+  if (!new URLSearchParams(location.search).has('debug') || me.status !== 'ok') return null;
+  const { achievements: _a, ...rest } = me.data;
+  return <pre class="diag">{JSON.stringify(rest, null, 2)}</pre>;
+}
+
 export function Achievements({ signedIn, me }: { signedIn: boolean; me: Async<MyGameStats> }) {
   const missed = useMemo(
     () =>
@@ -63,6 +70,17 @@ export function Achievements({ signedIn, me }: { signedIn: boolean; me: Async<My
         <p>Steam won't share your achievements because your <b>Game details</b> are private.</p>
         <a class="btn btn-ghost btn-sm" href="https://steamcommunity.com/my/edit/settings" target="_blank" rel="noopener">Open Steam privacy settings</a>
         <p class="muted small">Set “Game details” to Public, then reload this page in a few minutes.</p>
+      </div>
+    );
+  }
+  if (d.achievementsState === 'unavailable') {
+    return (
+      <div class="panel-empty">
+        <p>Steam won't share your achievements for this game.</p>
+        <p class="muted small">
+          Your profile is public, so this usually means it's a <b>Family Library</b> game you haven't played in the last two
+          weeks, or one you don't own. Play it for a bit and check back.
+        </p>
       </div>
     );
   }

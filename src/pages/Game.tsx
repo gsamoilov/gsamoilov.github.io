@@ -9,7 +9,7 @@ import { formatCount, formatPlaytime, useAsync } from '../lib/useAsync';
 import { Poster } from '../components/Poster';
 import { IconBook, IconClock, IconNews, IconNote, IconPlay, IconTrophy } from '../components/Icons';
 import { Wiki, useWikiMatch } from '../components/game/Wiki';
-import { Achievements } from '../components/game/Achievements';
+import { Achievements, Diagnostics } from '../components/game/Achievements';
 import { Notes } from '../components/game/Notes';
 import { News } from '../components/game/News';
 import { NotFound } from './NotFound';
@@ -99,6 +99,13 @@ export function Game() {
   const stats = me.status === 'ok' ? me.data : null;
   const pct = stats && stats.achievementsTotal ? Math.round((stats.achievementsEarned / stats.achievementsTotal) * 100) : null;
   const dash = <span class="muted">—</span>;
+  const playtimeLabel = !userId
+    ? 'sign in'
+    : !stats || stats.owned || !stats.profileVisible
+      ? 'your playtime'
+      : stats.familyOrBorrowed
+        ? 'family library'
+        : 'not in library';
 
   return (
     <>
@@ -123,8 +130,8 @@ export function Game() {
                 <span>playing now</span>
               </div>
               <div class="stat" title={stats && !stats.profileVisible ? 'Your Steam game details are private' : 'Your total playtime'}>
-                <b><IconClock class="ic" /> {stats?.owned ? formatPlaytime(stats.playtimeMinutes) : dash}</b>
-                <span>{userId ? (stats && !stats.owned && stats.profileVisible ? 'not in library' : 'your playtime') : 'sign in'}</span>
+                <b><IconClock class="ic" /> {stats?.playtimeKnown ? formatPlaytime(stats.playtimeMinutes) : dash}</b>
+                <span>{playtimeLabel}</span>
               </div>
               <div class="stat" title={stats ? `${stats.achievementsEarned} of ${stats.achievementsTotal} achievements` : ''}>
                 <b><IconTrophy class="ic" /> {pct !== null ? `${pct}%` : dash}</b>
@@ -163,6 +170,7 @@ export function Game() {
         <aside class={show('achievements')} aria-label="Missed achievements">
           <div class="panel-head"><IconTrophy class="ic" /><h2>Missed achievements</h2></div>
           <Achievements signedIn={!!userId} me={me} />
+          <Diagnostics me={me} />
         </aside>
 
         <section class={`${show('wiki')} wiki`} aria-label="Wiki">

@@ -149,17 +149,57 @@ export async function steamidFor(db: ReturnType<typeof adminClient>, req: Reques
   return prof.steamid;
 }
 
+/** Parses Steam Community's achievements XML (fallback when the Web API refuses, e.g. Family Library games). */
+export function parseCommunityAchievementsXml(xml: string): Record<string, number> | null {
+  if (!/<playerstats>/i.test(xml) || /<error>/i.test(xml)) return null;
+  const unlocked: Record<string, number> = {};
+  for (const m of xml.matchAll(/<achievement\s+closed="1"[^>]*>([\s\S]*?)<\/achievement>/gi)) {
+    const api = /<apiname>\s*(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?\s*<\/apiname>/i.exec(m[1])?.[1]?.trim();
+    const ts = Number(/<unlockTimestamp>\s*(\d+)\s*<\/unlockTimestamp>/i.exec(m[1])?.[1] ?? 0);
+    if (api) unlocked[api.toLowerCase()] = ts;
+  }
+  return unlocked;
+}
+
+type PlayerAch =
+  | { state: 'ok'; unlocked: Record<string, number>; source: 'api' | 'community' }
+  | { state: 'private' }
+  | { state: 'nostats' }
+  | { state: 'unavailable' };
+
 export async function me(db: ReturnType<typeof adminClient>, steamid: string, appid: number) {
-  // playtime (empty response = private "Game details" or game not owned)
-  const owned = await cached(db, `owned:${steamid}:${appid}`, 10 * MIN, async () => {
+  const diag: Record<string, unknown> = {};
+
+  // 1. Playtime from the owned-games list. An empty response means "Game details" are private.
+  //    Family Library (borrowed) games are NOT in this list.
+  const owned = await cached(db, `owned2:${steamid}:${appid}`, 10 * MIN, async () => {
     const { status, body } = await getJson(
-      api('IPlayerService/GetOwnedGames/v1/', { steamid, include_played_free_games: 1, 'appids_filter[0]': appid }, true),
+      api('IPlayerService/GetOwnedGames/v1/', { steamid, include_played_free_games: 1, include_free_sub: 1, 'appids_filter[0]': appid }, true),
     );
     if (status !== 200) throw new Error(`owned ${status}`);
     const r = body?.response ?? {};
     const g = (r.games ?? []).find((x: any) => x.appid === appid);
     return { visible: 'game_count' in r, owned: !!g, playtimeMinutes: g ? Number(g.playtime_forever ?? 0) : 0 };
   });
+  diag.gameDetailsPublic = owned.visible;
+  diag.inOwnedGames = owned.owned;
+
+  // 2. Not owned: borrowed games still show up in "recently played" (last 2 weeks), with total playtime.
+  let playtimeMinutes = owned.playtimeMinutes;
+  let playtimeSource: 'owned' | 'recent' | 'none' = owned.owned ? 'owned' : 'none';
+  if (!owned.owned && owned.visible) {
+    const recent = await cached(db, `recent:${steamid}`, 10 * MIN, async () => {
+      const { status, body } = await getJson(api('IPlayerService/GetRecentlyPlayedGames/v1/', { steamid, count: 0 }, true));
+      if (status !== 200) throw new Error(`recent ${status}`);
+      return ((body?.response?.games ?? []) as any[]).map((g) => ({ appid: Number(g.appid), minutes: Number(g.playtime_forever ?? 0) }));
+    }).catch(() => []);
+    const g = recent.find((x) => x.appid === appid);
+    if (g) {
+      playtimeMinutes = g.minutes;
+      playtimeSource = 'recent';
+    }
+  }
+  diag.playtimeSource = playtimeSource;
 
   const schema = await cached(db, `schema:${appid}`, 24 * HOUR, async () => {
     const { status, body } = await getJson(api('ISteamUserStats/GetSchemaForGame/v2/', { appid, l: 'english' }, true));
@@ -172,6 +212,7 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
       hidden: a.hidden === 1,
     }));
   });
+  diag.schemaAchievements = schema.length;
 
   const global = await cached(db, `globalach:${appid}`, 24 * HOUR, async () => {
     const { status, body } = await getJson(api('ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/', { gameid: appid }));
@@ -181,39 +222,59 @@ export async function me(db: ReturnType<typeof adminClient>, steamid: string, ap
     return out;
   });
 
-  type PlayerAch = { state: 'ok'; unlocked: Record<string, number> } | { state: 'private' } | { state: 'nostats' };
-  const player: PlayerAch = schema.length
-    ? await cached(db, `playerach:${steamid}:${appid}`, 5 * MIN, async () => {
-        const { status, body } = await getJson(api('ISteamUserStats/GetPlayerAchievements/v1/', { steamid, appid }, true));
-        const ps = body?.playerstats;
-        if (ps?.success) {
-          const unlocked: Record<string, number> = {};
-          for (const a of ps.achievements ?? []) if (a.achieved === 1) unlocked[a.apiname] = Number(a.unlocktime ?? 0);
-          return { state: 'ok', unlocked } as PlayerAch;
-        }
-        const err = String(ps?.error ?? '');
-        if (/not public/i.test(err) || status === 403) return { state: 'private' } as PlayerAch;
-        if (/no stats/i.test(err) || status === 400) return { state: 'nostats' } as PlayerAch;
-        throw new Error(`playerach ${status} ${err}`);
-      })
-    : { state: 'nostats' };
+  // 3. Achievements: Web API first; if it refuses while the profile is public, try the Community XML page.
+  let player: PlayerAch = { state: 'nostats' };
+  if (schema.length) {
+    player = await cached(db, `playerach2:${steamid}:${appid}`, 5 * MIN, async () => {
+      const { status, body } = await getJson(api('ISteamUserStats/GetPlayerAchievements/v1/', { steamid, appid }, true));
+      const ps = body?.playerstats;
+      diag.apiStatus = status;
+      if (ps?.success) {
+        const unlocked: Record<string, number> = {};
+        for (const a of ps.achievements ?? []) if (a.achieved === 1) unlocked[String(a.apiname).toLowerCase()] = Number(a.unlocktime ?? 0);
+        return { state: 'ok', unlocked, source: 'api' } as PlayerAch;
+      }
+      diag.apiError = String(ps?.error ?? body?.error ?? '').slice(0, 200);
+      console.warn('GetPlayerAchievements refused', { appid, status, error: diag.apiError, gameDetailsPublic: owned.visible });
 
-  const achievements = schema.map((a) => ({
-    ...a,
-    achieved: player.state === 'ok' && a.id in player.unlocked,
-    unlockedAt: player.state === 'ok' ? player.unlocked[a.id] : undefined,
-    globalPercent: global[a.id],
-  }));
+      // Only call it "private" when the owned-games list confirms the profile hides game details.
+      if (!owned.visible) return { state: 'private' } as PlayerAch;
+
+      const xmlRes = await fetch(`https://steamcommunity.com/profiles/${steamid}/stats/${appid}/achievements/?xml=1&l=english`, {
+        headers: { 'User-Agent': UA },
+      }).catch(() => null);
+      diag.communityStatus = xmlRes?.status ?? 'failed';
+      if (xmlRes?.ok) {
+        const parsed = parseCommunityAchievementsXml(await xmlRes.text());
+        if (parsed) return { state: 'ok', unlocked: parsed, source: 'community' } as PlayerAch;
+      }
+      return { state: 'unavailable' } as PlayerAch;
+    });
+  }
+  diag.achievementsSource = player.state === 'ok' ? player.source : player.state;
+  if (schema.length && !('apiStatus' in diag)) diag.achievementsFromCache = true;
+
+  const achievements = schema.map((a) => {
+    const key = a.id.toLowerCase();
+    return {
+      ...a,
+      achieved: player.state === 'ok' && key in player.unlocked,
+      unlockedAt: player.state === 'ok' ? player.unlocked[key] : undefined,
+      globalPercent: global[a.id],
+    };
+  });
   const earned = achievements.filter((a) => a.achieved).length;
 
   return {
-    profileVisible: owned.visible && player.state !== 'private',
+    profileVisible: owned.visible,
     owned: owned.owned,
-    playtimeMinutes: owned.playtimeMinutes,
+    familyOrBorrowed: owned.visible && !owned.owned && (playtimeSource === 'recent' || player.state === 'ok'),
+    playtimeMinutes,
+    playtimeKnown: playtimeSource !== 'none',
     achievementsState: player.state,
     achievementsTotal: achievements.length,
     achievementsEarned: earned,
     achievements,
+    diagnostics: diag,
   };
 }
-

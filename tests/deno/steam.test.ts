@@ -1,6 +1,6 @@
 // Run: deno test tests/deno/  (checks the steam Edge Function logic against canned Steam responses)
 import { assertEquals, assertRejects } from 'jsr:@std/assert@1';
-import { game, HttpError, me, news, wiki } from '../../supabase/functions/steam/logic.ts';
+import { game, HttpError, me, news, parseCommunityAchievementsXml, wiki } from '../../supabase/functions/steam/logic.ts';
 
 Deno.env.set('STEAM_API_KEY', 'TESTKEY');
 
@@ -115,4 +115,43 @@ Deno.test('wiki proxy: only allow-listed wiki api.php hosts and read actions', a
   await assertRejects(() => wiki(fakeDb(), 'https://evil.example/api.php', { action: 'parse' }), HttpError, 'allow-list');
   await assertRejects(() => wiki(fakeDb(), 'https://terraria.wiki.gg/index.php', { action: 'parse' }), HttpError, 'allow-list');
   await assertRejects(() => wiki(fakeDb(), 'https://terraria.wiki.gg/api.php', { action: 'edit' }), HttpError, 'unsupported');
+});
+
+const XML = `<?xml version="1.0" encoding="UTF-8"?><playerstats><game><gameName>Terraria</gameName></game><achievements>
+<achievement closed="1"><iconClosed>x</iconClosed><apiname><![CDATA[ACH_EASY]]></apiname><name>First Steps</name><unlockTimestamp>1700000000</unlockTimestamp></achievement>
+<achievement closed="0"><apiname>ACH_BOSS</apiname><name>Secret Ending</name></achievement>
+<achievement closed="1"><apiname>ach_done</apiname><name>Done</name><unlockTimestamp>1700000500</unlockTimestamp></achievement>
+</achievements></playerstats>`;
+
+Deno.test('community XML parser', () => {
+  assertEquals(parseCommunityAchievementsXml(XML), { ach_easy: 1700000000, ach_done: 1700000500 });
+  assertEquals(parseCommunityAchievementsXml('<?xml version="1.0"?><response><error>The specified profile is private.</error></response>'), null);
+});
+
+Deno.test('me: Family Library game -> playtime from recently played, achievements from Community fallback', async () => {
+  stubFetch([
+    [/GetOwnedGames/, 200, { response: { game_count: 120, games: [] } }], // public, but the game isn't owned
+    [/GetRecentlyPlayedGames/, 200, { response: { total_count: 2, games: [{ appid: 99, playtime_forever: 10 }, { appid: 10, playtime_forever: 1234 }] } }],
+    [/GetSchemaForGame/, 200, SCHEMA],
+    [/GetGlobalAchievementPercentages/, 200, GLOBAL],
+    [/GetPlayerAchievements/, 403, { playerstats: { error: 'Profile is not public', success: false } }],
+    [/steamcommunity\.com\/profiles\/76561197960287930\/stats\/10\/achievements/, 200, XML],
+  ]);
+  const r = await me(fakeDb(), '76561197960287930', 10);
+  assertEquals([r.profileVisible, r.owned, r.familyOrBorrowed, r.playtimeMinutes, r.playtimeKnown], [true, false, true, 1234, true]);
+  assertEquals([r.achievementsState, r.achievementsEarned, r.achievementsTotal], ['ok', 2, 3]);
+  assertEquals(r.diagnostics.achievementsSource, 'community');
+});
+
+Deno.test('me: public profile but Steam refuses everything -> "unavailable", never "private"', async () => {
+  stubFetch([
+    [/GetOwnedGames/, 200, { response: { game_count: 120, games: [] } }],
+    [/GetRecentlyPlayedGames/, 200, { response: { total_count: 0 } }],
+    [/GetSchemaForGame/, 200, SCHEMA],
+    [/GetGlobalAchievementPercentages/, 200, GLOBAL],
+    [/GetPlayerAchievements/, 403, { playerstats: { error: 'Profile is not public', success: false } }],
+    [/steamcommunity/, 200, '<response><error>Not found</error></response>'],
+  ]);
+  const r = await me(fakeDb(), '76561197960287930', 10);
+  assertEquals([r.profileVisible, r.achievementsState, r.playtimeKnown], [true, 'unavailable', false]);
 });
